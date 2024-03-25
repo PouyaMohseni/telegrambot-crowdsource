@@ -50,7 +50,7 @@ async def buttonstart(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                      InlineKeyboardButton("Santour", callback_data='q1_03')]]
         instrument_markup_q1 = InlineKeyboardMarkup(instruments_q1)
             
-        await query.message.reply_text('What instrument you heared?', reply_markup=instrument_markup_q1)
+        await query.message.reply_text('What instrument did you heared?', reply_markup=instrument_markup_q1)
 
     ####
     # Handeling the question 1 response
@@ -72,7 +72,7 @@ async def buttonstart(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         instrument_markup_q2 = InlineKeyboardMarkup(instruments_q2)
 
 
-        await query.message.reply_text('What instrument you heared?', reply_markup=instrument_markup_q2)
+        await query.message.reply_text('What instrument did you heared?', reply_markup=instrument_markup_q2)
 
 
     ####
@@ -95,13 +95,13 @@ async def buttonstart(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         instrument_markup_q3 = InlineKeyboardMarkup(instruments_q3)
 
 
-        await query.message.reply_text('What instrument you heared?', reply_markup=instrument_markup_q3)
+        await query.message.reply_text('What instrument did you heared?', reply_markup=instrument_markup_q3)
         
 
     ####
-    # Handeling the question 2 response
+    # Handeling the question 3 response
     ####
-    elif response[:2] == 'q2':
+    elif response[:2] == 'q3':
         await query.edit_message_text(text="Your answer has been recorded!")
         # Adding to the dataset
 
@@ -126,8 +126,6 @@ def main():
 
     app = ApplicationBuilder().token("6900009914:AAGomuchkUQ-hFQcVQLtK7E8gJXrRU4AwN0").build()
 
-    app.add_handler(CommandHandler("hello", hello))
-
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(buttonstart, pattern='^1$'))
 
@@ -135,17 +133,10 @@ def main():
 
 #if __name__ == "__main__":
 #    main()
-    
+
 
 user_db = "user.xlsx"
 user = pd.read_excel(user_db)
-
-    # Define markup for ground truth questions
-instruments = [[InlineKeyboardButton("Tar", callback_data='A'),
-                 InlineKeyboardButton("Ney", callback_data='B'),
-                 InlineKeyboardButton("Setar", callback_data='C'),
-                 InlineKeyboardButton("Santour", callback_data='D')]]
-instrument_markup = InlineKeyboardMarkup(instruments)
 
 app = ApplicationBuilder().token("6900009914:AAGomuchkUQ-hFQcVQLtK7E8gJXrRU4AwN0").build()
 

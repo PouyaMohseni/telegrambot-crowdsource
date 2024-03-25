@@ -1,131 +1,128 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackQueryHandler #, Filters
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-#import logging
 import pandas as pd
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-
-async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text(f'Hello {update.effective_user.first_name}')
 
 
 # Define a function to start the bot
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     await update.message.reply_text("Welcome to the bot!")
-    keyboard = [[InlineKeyboardButton("Not Proficient", callback_data='1'),
-                 InlineKeyboardButton("Moderate", callback_data='2'),
-                 InlineKeyboardButton("Perfect", callback_data='3')]]
+    keyboard = [[InlineKeyboardButton("Not Proficient", callback_data='st_1'),
+                 InlineKeyboardButton("Moderate", callback_data='st_2'),
+                 InlineKeyboardButton("Perfect", callback_data='st_3')]]
 
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text('How would you rate your ear-training abilities:', reply_markup=reply_markup)
 
-# Define a button for start function
 async def buttonstart(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     user_id = query.from_user.id
-    response = int(query.data)
+    response = query.data
     
-    # Check if the user already exists in the DataFrame
-    if user_id not in user["ID"].values:
-        # If the user is new, append their response to the DataFrame
-        user.loc[len(user)] = [user_id, response, 0, 0]
-        # Update Excel file
-        user.to_excel(user_db, index=False)
-        await query.edit_message_text(text="Your answer has been recorded. Thank you!")
-    else:
-        await query.edit_message_text(text="Your answer has been updated!")
+    ####
+    # Handeling the start response
+    ####
+    if response[:2] == 'st':
+        response_code = int(response[3])
+        # Check if the user already exists in the DataFrame
+        if user_id not in user["ID"].values:
+            # If the user is new, append their response to the DataFrame
+            user.loc[len(user)] = [user_id, response, 0, 0]
+            # Update Excel file
+            user.to_excel(user_db, index=False)
+            await query.edit_message_text(text="Your answer has been recorded. Thank you!")
+        else:
+            await query.edit_message_text(text="Your answer has been updated!")
+
+        await query.edit_message_text(text="For each of these ground-truth tests check the instrument you recognized!")
+
+        
+        audio_file = open("./dataset/truth/track 1.mp3", "rb")
+        await context.bot.send_audio(chat_id=user_id, audio=audio_file)
+        audio_file.close()
+
+        instruments_q1 = [[InlineKeyboardButton("Tar", callback_data='q1_01'),
+                     InlineKeyboardButton("Ney", callback_data='q1_1'),
+                     InlineKeyboardButton("Setar", callback_data='q1_02'),
+                     InlineKeyboardButton("Santour", callback_data='q1_03')]]
+        instrument_markup_q1 = InlineKeyboardMarkup(instruments_q1)
+            
+        await query.message.reply_text('What instrument you heared?', reply_markup=instrument_markup_q1)
+
+    ####
+    # Handeling the question 1 response
+    ####
+    elif response[:2] == 'q1':
+        await query.edit_message_text(text="Your answer has been recorded!")
+        # Adding to the dataset
 
 
-# Define groundtruth functions
-# Function one
-async def question_1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("For each of these ground-truth tests check the instrument you recognized!")
-    audio_file = open("./dataset/truth/track 1.mp3", "rb")
-    await context.bot.send_audio(audio=audio_file)
-    audio_file.close()
+        # Asking the next question
+        audio_file = open("./dataset/truth/track 1.mp3", "rb")
+        await context.bot.send_audio(chat_id=user_id, audio=audio_file)
+        audio_file.close()
 
-    keyboard = [
-        [
-            InlineKeyboardButton("Option 1", callback_data='1'),
-            InlineKeyboardButton("Option 2", callback_data='2'),
-            InlineKeyboardButton("Option 3", callback_data='3'),
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await context.bot.send_message(text="Question 1: Choose an option", reply_markup=reply_markup)
+        instruments_q2 = [[InlineKeyboardButton("Tar", callback_data='q2_1'),
+                     InlineKeyboardButton("Ney", callback_data='q2_01'),
+                     InlineKeyboardButton("Setar", callback_data='q2_02'),
+                     InlineKeyboardButton("Santour", callback_data='q2_03')]]
+        instrument_markup_q2 = InlineKeyboardMarkup(instruments_q2)
 
-# Function to handle the first question response
-def answer_1(update, context):
-    query = update.callback_query
-    user_responses[query.message.chat_id].append(query.data)
 
-    # Ask the second question
-    question_2(query.message.chat_id, context)
+        await query.message.reply_text('What instrument you heared?', reply_markup=instrument_markup_q2)
 
-# Function to ask the second question
-def question_2(chat_id, context):
-    audio_file = open("path_to_your_audio_file.mp3", "rb")  # Replace with the path to your audio file
-    context.bot.send_audio(chat_id=chat_id, audio=audio_file)
-    audio_file.close()
 
-    keyboard = [
-        [
-            InlineKeyboardButton("Option A", callback_data='A'),
-            InlineKeyboardButton("Option B", callback_data='B'),
-            InlineKeyboardButton("Option C", callback_data='C'),
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    context.bot.send_message(chat_id=chat_id, text="Question 2: Choose an option", reply_markup=reply_markup)
+    ####
+    # Handeling the question 2 response
+    ####
+    elif response[:2] == 'q2':
+        await query.edit_message_text(text="Your answer has been recorded!")
+        # Adding to the dataset
 
-# Function to handle the second question response
-def answer_2(update, context):
-    query = update.callback_query
-    user_responses[query.message.chat_id].append(query.data)
 
-    # Ask the third question
-    question_3(query.message.chat_id, context)
+        # Asking the next question
+        audio_file = open("./dataset/truth/track 1.mp3", "rb")
+        await context.bot.send_audio(chat_id=user_id, audio=audio_file)
+        audio_file.close()
 
-# Function to ask the third question
-def question_3(chat_id, context):
-    audio_file = open("path_to_your_audio_file.mp3", "rb")  # Replace with the path to your audio file
-    context.bot.send_audio(chat_id=chat_id, audio=audio_file)
-    audio_file.close()
+        instruments_q3 = [[InlineKeyboardButton("Tar", callback_data='q3_01'),
+                     InlineKeyboardButton("Ney", callback_data='q3_02'),
+                     InlineKeyboardButton("Setar", callback_data='q3_13'),
+                     InlineKeyboardButton("Santour", callback_data='q3_04')]]
+        instrument_markup_q3 = InlineKeyboardMarkup(instruments_q3)
 
-    context.bot.send_message(chat_id=chat_id, text="Question 3: What is your favorite color?")
 
-# Function to handle the third question response
-def answer_3(update, context):
-    user_responses[update.message.chat_id].append(update.message.text)
+        await query.message.reply_text('What instrument you heared?', reply_markup=instrument_markup_q3)
+        
 
-    # Display the collected responses
-    context.bot.send_message(chat_id=update.message.chat_id, text="Thank you for your responses!")
-    context.bot.send_message(chat_id=update.message.chat_id, text="Here are your responses:")
-    context.bot.send_message(chat_id=update.message.chat_id, text=str(user_responses[update.message.chat_id]))
+    ####
+    # Handeling the question 2 response
+    ####
+    elif response[:2] == 'q2':
+        await query.edit_message_text(text="Your answer has been recorded!")
+        # Adding to the dataset
 
-#gtruth
-async def gtruth(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    
-    await update.message.reply_text("For each of these ground-truth tests check the instrument you recognized!")
 
-    await update.message.reply_text('How would you rate your ear-training abilities:', reply_markup=reply_markup)
+        # Updating the credit
+
+        #Stating the credit
+        #if full
+            #await query.message.reply_text('What instrument yo', reply_markup=instrument_markup_q3)
+
+        #elif 3-5
+            #await query.message.reply_text('What instrument yo', reply_markup=instrument_markup_q3)
+
+        #else
+            #await query.message.reply_text('What instrument yo', reply_markup=instrument_markup_q3)
+
 
 
 
 # Main function
 def main():
-    # Define the Excel file name
-    user_db = "user.xlsx"
-    user = pd.read_excel(user_db)
-
-    # Define markup for ground truth questions
-    instruments = [[InlineKeyboardButton("Tar", callback_data='1'),
-                 InlineKeyboardButton("Ney", callback_data='2'),
-                 InlineKeyboardButton("Setar", callback_data='3'),
-                 InlineKeyboardButton("Santour", callback_data='4')]]
-    instrument_markup = InlineKeyboardMarkup(instruments)
 
     app = ApplicationBuilder().token("6900009914:AAGomuchkUQ-hFQcVQLtK7E8gJXrRU4AwN0").build()
 
@@ -134,32 +131,27 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(buttonstart, pattern='^1$'))
 
-    #app.add_handler(CommandHandler("test", test))
-    #app.add_handler(CallbackQueryHandler(buttontest))
-
     app.run_polling()
 
+#if __name__ == "__main__":
+#    main()
+    
 
 user_db = "user.xlsx"
 user = pd.read_excel(user_db)
 
     # Define markup for ground truth questions
-instruments = [[InlineKeyboardButton("Tar", callback_data='1'),
-                 InlineKeyboardButton("Ney", callback_data='2'),
-                 InlineKeyboardButton("Setar", callback_data='3'),
-                 InlineKeyboardButton("Santour", callback_data='4')]]
+instruments = [[InlineKeyboardButton("Tar", callback_data='A'),
+                 InlineKeyboardButton("Ney", callback_data='B'),
+                 InlineKeyboardButton("Setar", callback_data='C'),
+                 InlineKeyboardButton("Santour", callback_data='D')]]
 instrument_markup = InlineKeyboardMarkup(instruments)
 
 app = ApplicationBuilder().token("6900009914:AAGomuchkUQ-hFQcVQLtK7E8gJXrRU4AwN0").build()
 
-app.add_handler(CommandHandler("hello", hello))
-
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CallbackQueryHandler(buttonstart))
 
-app.add_handler(CommandHandler("question_1", question_1))
-
-    #app.add_handler(CommandHandler("test", test))
-    #app.add_handler(CallbackQueryHandler(buttontest))
 
 app.run_polling()
+

@@ -69,7 +69,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text('Thank you! Your answer has been recorded.')
 
     # Save the updated data
-    df.to_excel('user.xlsx', index=False)
+    df.to_excel('./dataframe/user.xlsx', index=False)
             
 
     await update.message.reply_text(
@@ -138,7 +138,7 @@ async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     answer = text=="Kamancheh"
     df = pd.read_excel('./dataframe/user.xlsx')
     df.loc[df['chat_id'] == chat_id, 'correct'] = df.loc[df['chat_id'] == chat_id, 'correct']+answer
-    df.to_excel('user.xlsx', index=False)
+    df.to_excel('./dataframe/user.xlsx', index=False)
 
     reply_keyboard = [["Tar", "Ney", "Kamancheh"], ["Setar", "Santour"]]
 

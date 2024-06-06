@@ -18,16 +18,17 @@ logger = logging.getLogger(__name__)
 
 
 ABILITY, GTRUTH1, GTRUTH2, GTRUTH3 = range(4)
-TAR, NEY, SETAR, SANTOUR, KAMANCHEH, END_ANNOT = range(6)
+INSTRUMENT, END_ANNOT = range(2)
+
+all_instruments = ["tar", "ney", "setar", "santour", "kamancheh"]
 
 ability_mapping = {
             "کم: آشنایی کمی با سازهای موسیقی دارم": 0,
             "متوسط: با تفاوت های بعضی از سازهای موسیقی آشنا هستم": 1,
             "زیاد: گوش موسیقی من آموزش دیده است": 2
     }
+basic_annotation = {instrument: -1 for instrument in all_instruments}
 
-instrument_mapping = {"tar": TAR, "ney": NEY, "setar": SETAR, "santour": SANTOUR, "kamancheh": KAMANCHEH}
-basic_annotation = { instrument: -1 for instrument in instrument_mapping.keys()}
 
 # Start the bot
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -251,7 +252,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     reply_keyboard = [["No", "Yes"]]
     await update.message.reply_text(
-        "Did you heared a *singer*?",
+        "آيا قطعه *خواننده* داشت؟",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder="Singer?"
         ),
@@ -270,140 +271,37 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     if len(context.user_data["instruments"]) > 0:
         next_instrument = context.user_data["instruments"].pop(0)
-        return instrument_mapping[next_instrument]
+        context.user_data["next_instrument"] = next_instrument
+        return INSTRUMENT
         
     
     return END_ANNOT
 
 
-
-async def tar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def instrument(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Save the annotation in the context
-    text = update.message.text
-    context.user_data["annotations"][context.user_data["last_instrument"]] = text
-
-    # Ask the tar annotation
-    reply_keyboard = [["0", "1", "2"]]
-    await update.message.reply_text(
-        "How strong does the *tar* sound?",
-        reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Tar?"
-        ),
-        parse_mode='Markdown',
-    )
-
-    # Update the last instruent
-    context.user_data["last_instrument"] = "tar"
-
-    # Continue the conversation to the next instrument
-    if len(context.user_data["instruments"]) > 0:
-        next_instrument = context.user_data["instruments"].pop(0)
-        return instrument_mapping[next_instrument]
-        
-    return END_ANNOT
-
-
-
-async def ney(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Save the annotation in the context
-    text = update.message.text
-    context.user_data["annotations"][context.user_data["last_instrument"]] = text
-
-    # Ask the ney annotation
-    reply_keyboard = [["0", "1", "2"]]
-    await update.message.reply_text(
-        "How strong does the *ney* sound?",
-        reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Ney?"
-        ),
-        parse_mode='Markdown',
-    )
-
-    # Update the last instruent
-    context.user_data["last_instrument"] = "ney"
-
-    # Continue the conversation to the next instrument
-    if len(context.user_data["instruments"]) > 0:
-        next_instrument = context.user_data["instruments"].pop(0)
-        return instrument_mapping[next_instrument]
-        
-    return END_ANNOT
-
-
-async def setar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Save the annotation in the context
-    text = update.message.text
-    context.user_data["annotations"][context.user_data["last_instrument"]] = text
-
-    # Ask the setar annotation
-    reply_keyboard = [["0", "1", "2"]]
-    await update.message.reply_text(
-        "How strong does the *setar* sound?",
-        reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Setar?"
-        ),
-        parse_mode='Markdown',
-    )
-
-    # Update the last instruent
-    context.user_data["last_instrument"] = "Setar"
-
-    # Continue the conversation to the next instrument
-    if len(context.user_data["instruments"]) > 0:
-        next_instrument = context.user_data["instruments"].pop(0)
-        return instrument_mapping[next_instrument]
-        
-    return END_ANNOT
-
-
-async def santour(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Save the annotation in the context
-    text = update.message.text
-    context.user_data["annotations"][context.user_data["last_instrument"]] = text
-
-    # Ask the santour annotation
-    reply_keyboard = [["0", "1", "2"]]
-    await update.message.reply_text(
-        "How strong does the *santour* sound?",
-        reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Santour?"
-        ),
-        parse_mode='Markdown',
-    )
-
-    # Update the last instruent
-    context.user_data["last_instrument"] = "santour"
-
-    # Continue the conversation to the next instrument
-    if len(context.user_data["instruments"]) > 0:
-        next_instrument = context.user_data["instruments"].pop(0)
-        return instrument_mapping[next_instrument]
-        
-    return END_ANNOT
-
-
-async def kamancheh(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Save the annotation in the context
+    instrument = context.user_data["next_instrument"]
     text = update.message.text
     context.user_data["annotations"][context.user_data["last_instrument"]] = text
 
     # Ask the kamancheh annotation
     reply_keyboard = [["0", "1", "2"]]
     await update.message.reply_text(
-        "How strong does the *kamancheh* sound?",
+        f"صدای *{instrument}* در قطعه چقدر قوی بود؟",
         reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="kamancheh?"
+            reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{instrument}?"
         ),
         parse_mode='Markdown',
     )
 
     # Update the last instruent
-    context.user_data["last_instrument"] = "kamancheh"
+    context.user_data["last_instrument"] = instrument
 
     # Continue the conversation to the next instrument
     if len(context.user_data["instruments"]) > 0:
         next_instrument = context.user_data["instruments"].pop(0)
-        return instrument_mapping[next_instrument]
+        context.user_data["next_instrument"] = next_instrument
+        return INSTRUMENT
         
     return END_ANNOT
 
@@ -420,7 +318,6 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     
     # Convert every item to int
     row = {key: int(value) if key != 'singer' else value for key, value in row.items()}
-    
     row.update({"sample_id": sample_id, "chat_id": chat_id})
     
     df = pd.read_excel('./dataframe/annotation.xlsx')
@@ -433,24 +330,25 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     samples.loc[samples['sample_id'] == sample_id, 'num_annotation'] += 1
     samples.to_excel('./dataframe/samples.xlsx', index=False)
     
-    
     # Finish replay
     await update.message.reply_text(
-        "Thank  you for annotating this piece.",
+        "برچسب زني اين قطعه پايان يافت. بسيار متشکريم!"
+        "براي برچسب زني يک قطعه ديگر /annotate را فشار دهيد.",
         reply_markup=ReplyKeyboardRemove(),
     )
-
         
     return ConversationHandler.END
+
 
 
 async def cancel_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     await update.message.reply_text(
-        "Bye! I hope we can talk again some day. Start another annotation by /annotate", reply_markup=ReplyKeyboardRemove()
+        "با فشردن /annotate یک قطعه دیگر را برچسب زنی کنید.", reply_markup=ReplyKeyboardRemove()
     )
 
     return ConversationHandler.END
+
 
 
 # Main function
@@ -458,46 +356,36 @@ def main()-> None:
 
     app = ApplicationBuilder().token("6900009914:AAGomuchkUQ-hFQcVQLtK7E8gJXrRU4AwN0").build()
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(buttonstart, pattern='^1$'))
+    conv_handler = ConversationHandler(
+            entry_points=[CommandHandler("start", start)],
+            states={
+                ABILITY: [MessageHandler(filters.Regex("^(کم: آشنایی کمی با سازهای موسیقی دارم|متوسط: با تفاوت های بعضی از سازهای موسیقی آشنا هستم|زیاد: گوش موسیقی من آموزش دیده است)$"), gtruth1)],
+                GTRUTH1: [MessageHandler(filters.Regex("^(Tar|Ney|Setar|Santour|Kamancheh)$"), gtruth2)],
+                GTRUTH2: [MessageHandler(filters.Regex("^(Tar|Ney|Setar|Santour|Kamancheh)$"), gtruth3)],
+                GTRUTH3: [MessageHandler(filters.Regex("^(Tar|Ney|Setar|Santour|Kamancheh)$"), credit)],
+            },
+            fallbacks=[CommandHandler("cancel", cancel)],
+        )
+
+
+    annotation_handler = ConversationHandler(
+            entry_points=[CommandHandler("annotate", annotate)],
+            states={
+                INSTRUMENT: [MessageHandler(filters.Regex("^(0|1|2|Yes|No)$"), instrument)],
+                END_ANNOT: [MessageHandler(filters.Regex("^(0|1|2|Yes|No)$"), end_annotation)],
+            },
+            fallbacks=[CommandHandler("cancel_annotation", cancel_annotation)],
+        )
+
+    app.add_handler(conv_handler)
+    app.add_handler(annotation_handler)
 
     app.run_polling()
-
-#if __name__ == "__main__":
-#    main()
+    updater.idle()
 
 
 
-app = ApplicationBuilder().token("6900009914:AAGomuchkUQ-hFQcVQLtK7E8gJXrRU4AwN0").build()
 
-conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
-        states={
-            ABILITY: [MessageHandler(filters.Regex("^(کم: آشنایی کمی با سازهای موسیقی دارم|متوسط: با تفاوت های بعضی از سازهای موسیقی آشنا هستم|زیاد: گوش موسیقی من آموزش دیده است)$"), gtruth1)],
-            GTRUTH1: [MessageHandler(filters.Regex("^(Tar|Ney|Setar|Santour|Kamancheh)$"), gtruth2)],
-            GTRUTH2: [MessageHandler(filters.Regex("^(Tar|Ney|Setar|Santour|Kamancheh)$"), gtruth3)],
-            GTRUTH3: [MessageHandler(filters.Regex("^(Tar|Ney|Setar|Santour|Kamancheh)$"), credit)],
-        },
-        fallbacks=[CommandHandler("cancel", cancel)],
-    )
+if __name__ == "__main__":
+    main()
 
-
-annotation_handler = ConversationHandler(
-        entry_points=[CommandHandler("annotate", annotate)],
-        states={
-            TAR: [MessageHandler(filters.Regex("^(0|1|2|Yes|No)$"), tar)],
-            NEY: [MessageHandler(filters.Regex("^(0|1|2|Yes|No)$"), ney)],
-            SETAR: [MessageHandler(filters.Regex("^(0|1|2|Yes|No)$"), setar)],
-            SANTOUR: [MessageHandler(filters.Regex("^(0|1|2|Yes|No)$"), santour)],
-            KAMANCHEH: [MessageHandler(filters.Regex("^(0|1|2|Yes|No)$"), kamancheh)],
-            END_ANNOT: [MessageHandler(filters.Regex("^(0|1|2|Yes|No)$"), end_annotation)],
-        },
-        fallbacks=[CommandHandler("cancel_annotation", cancel_annotation)],
-    )
-
-app.add_handler(conv_handler)
-#app.add_handler(CommandHandler("annotate", annotate))
-app.add_handler(annotation_handler)
-
-app.run_polling()
-updater.idle()

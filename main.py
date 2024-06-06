@@ -22,7 +22,7 @@ TAR, NEY, SETAR, SANTOUR, KAMANCHEH, END_ANNOT = range(6)
 
 ability_mapping = {"Low": 0, "Moderate": 1, "High": 2}
 instrument_mapping = {"tar": TAR, "ney": NEY, "setar": SETAR, "santour": SANTOUR, "kamancheh": KAMANCHEH}
-basic_annotation = {"singer": -1, "tar": -1, "ney": -1, "setar": -1, "santour": -1, "kamancheh": -1}
+basic_annotation = { instrument: -1 for instrument in instrument_mapping.keys()}
 
 # Start the bot
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

@@ -20,22 +20,31 @@ logger = logging.getLogger(__name__)
 ABILITY, GTRUTH1, GTRUTH2, GTRUTH3 = range(4)
 TAR, NEY, SETAR, SANTOUR, KAMANCHEH, END_ANNOT = range(6)
 
-ability_mapping = {"Low": 0, "Moderate": 1, "High": 2}
+ability_mapping = {
+            "کم: آشنایی کمی با سازهای موسیقی دارم": 0,
+            "متوسط: با تفاوت های بعضی از سازهای موسیقی آشنا هستم": 1,
+            "زیاد: گوش موسیقی من آموزش دیده است": 2
+    }
+
 instrument_mapping = {"tar": TAR, "ney": NEY, "setar": SETAR, "santour": SANTOUR, "kamancheh": KAMANCHEH}
 basic_annotation = { instrument: -1 for instrument in instrument_mapping.keys()}
 
 # Start the bot
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
-    reply_keyboard = [["Low", "Moderate", "High"]]
-    
+    reply_keyboard = [
+            ["کم: آشنایی کمی با سازهای موسیقی دارم"],
+            ["متوسط: با تفاوت های بعضی از سازهای موسیقی آشنا هستم"],
+            ["زیاد: گوش موسیقی من آموزش دیده است"]
+        ]
 
     await update.message.reply_text(
-        "Hi! This is PersianMIR. "
-        "Send /cancel to stop annotation.\n\n"
-        "How would you rate your ear-training abilities (wriate a number between 1 and 4 with 1 being lowest and 4 being highest):",
+        "به آزمايشگاه موسيثي سنتي ايراني خوش آمديد. "
+        "برای توقف دکمه /cancel را فشار دهید \n\n"
+        "در ابتدا مهارت شنیداری موسیقی (Ear-training) شما بررسی میشود. \n\n"
+        "چقدر گوش موسیقی شما آموزش دیده است؟",
         reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Ear training ability"
+            reply_keyboard, one_time_keyboard=True, input_field_placeholder="سطح گوش موسيقي"
         ),
     )
 
@@ -48,7 +57,6 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.message.chat_id
     text = update.message.text
     logger.info("ability of %s: %s", user.first_name, update.message.text)
-
     ability = ability_mapping[text]
 
     try:
@@ -60,20 +68,20 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if chat_id in df['chat_id'].values:
         df.loc[df['chat_id'] == chat_id, 'answer'] = ability
         df.loc[df['chat_id'] == chat_id, ['correct', 'credit', 'level']] = 0
-        await update.message.reply_text('Your answer has been updated.')
+        await update.message.reply_text('متشکرم! پاسخ قبلي شما به روز رساني شد.')
 
     else:
         # Append the new answer
         new_entry = pd.DataFrame([[chat_id, ability]], columns=['chat_id', 'answer'])
         df = pd.concat([df, new_entry], ignore_index=True)
-        await update.message.reply_text('Thank you! Your answer has been recorded.')
+        await update.message.reply_text('متشکرم! پاسخ شما ذخيره شد.')
 
     # Save the updated data
     df.to_excel('./dataframe/user.xlsx', index=False)
             
 
-    await update.message.reply_text(
-        "For each of these ground-truth tests check the instrument you recognized!",
+    await update.message.reply_text(       
+        "حال، در ادامه بررسی مهارت های شنیداری شما سه قطعه موسیقی برای شما پخش میشود. شما باید برای هر قطعه، از بین پنج ساز آورده شده در منوی پایینی، سازی که میشنوید را انتخاب کنید.",
         reply_markup=ReplyKeyboardRemove(),
     )
 
@@ -84,9 +92,9 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     audio_file.close()
     
     await update.message.reply_text(
-        "What instrument did you heared?",
+        "صداي چه سازي را شنيديد؟",
         reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Instrument"
+            reply_keyboard, one_time_keyboard=True, input_field_placeholder="ساز؟"
         ),
     )
     
@@ -100,7 +108,7 @@ async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logger.info("ability of %s: %s", user.first_name, update.message.text)
 
     await update.message.reply_text(
-        "Your answer has been recorded!",
+        "پاسخ شما ذخيره شد.",
         reply_markup=ReplyKeyboardRemove(),
     )
 
@@ -116,9 +124,9 @@ async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     audio_file.close()
 
     await update.message.reply_text(
-        "What instrument did you heared?",
+        "صداي چه سازي را شنيديد؟",
         reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Instrument"
+            reply_keyboard, one_time_keyboard=True, input_field_placeholder="ساز؟"
         ),
     )
     
@@ -131,13 +139,13 @@ async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logger.info("ability of %s: %s", user.first_name, update.message.text)
 
     await update.message.reply_text(
-        "Your answer has been recorded!",
+        "پاسخ شما ذخيره شد.",
         reply_markup=ReplyKeyboardRemove(),
     )
 
     answer = text=="Kamancheh"
     df = pd.read_excel('./dataframe/user.xlsx')
-    df.loc[df['chat_id'] == chat_id, 'correct'] = df.loc[df['chat_id'] == chat_id, 'correct']+answer
+    df.loc[df['chat_id'] == chat_id, 'correct'] = df.loc[df['chat_id'] == chat_id, 'correct'] + answer
     df.to_excel('./dataframe/user.xlsx', index=False)
 
     reply_keyboard = [["Tar", "Ney", "Kamancheh"], ["Setar", "Santour"]]
@@ -147,9 +155,9 @@ async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     audio_file.close()
 
     await update.message.reply_text(
-        "What instrument did you heared?",
+        "صداي چه سازي را شنيديد؟",
         reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Instrument"
+            reply_keyboard, one_time_keyboard=True, input_field_placeholder="ساز؟"
         ),
     )
     
@@ -179,10 +187,9 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     df.to_excel('./dataframe/user.xlsx', index=False)
 
            
-    await update.message.reply_text(
-        "Ground Truth tests are finished! \n\n"
-        f"Your level is: {level}.\n\n"
-        "To annotate a sample click on /annotate.",
+    await update.message.reply_text("بررسی مهارت های شنیداری شما پایان یافت. \n\n"
+        f"سطح شما {level} مي باشد. \n\n"
+        "برای برچسب زدن قطعات /annotate را فشار دهید",
         reply_markup=ReplyKeyboardRemove(),
     )
 
@@ -195,7 +202,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     logger.info("ability of %s: %s", user.first_name, update.message.text)
     
     await update.message.reply_text(
-        "Bye! I hope we can talk again some day.", reply_markup=ReplyKeyboardRemove()
+        "از مشاکرت شما متشکريم.", reply_markup=ReplyKeyboardRemove()
     )
 
     return ConversationHandler.END
@@ -208,8 +215,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     if chat_id not in df['chat_id'].values:
         await update.message.reply_text(
-            "You have not yet complited the Ground Truth tests.\n\n"
-            "To do so please press /start."
+            "مهارت شنیداری شما بررسی نشده. برای ادامه /start را فشار دهید."
         )
         return True
 
@@ -227,8 +233,8 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Return if there are no samples
     if filtered_samples.empty:
         await update.message.reply_text(
-            "Sorry, currently there are no samples at this level.\n\n"
-            "Please press /annotate later.",
+            "متاسفانه هیچ قطعه ای در این سطح وجود ندارد. \n\n"
+            "لطفا، بعدا با فشردن /annotate دوباره امتحان کنید.",
             reply_markup=ReplyKeyboardRemove()
         )
 
@@ -467,7 +473,7 @@ app = ApplicationBuilder().token("6900009914:AAGomuchkUQ-hFQcVQLtK7E8gJXrRU4AwN0
 conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            ABILITY: [MessageHandler(filters.Regex("^(Low|Moderate|High)$"), gtruth1)],
+            ABILITY: [MessageHandler(filters.Regex("^(کم: آشنایی کمی با سازهای موسیقی دارم|متوسط: با تفاوت های بعضی از سازهای موسیقی آشنا هستم|زیاد: گوش موسیقی من آموزش دیده است)$"), gtruth1)],
             GTRUTH1: [MessageHandler(filters.Regex("^(Tar|Ney|Setar|Santour|Kamancheh)$"), gtruth2)],
             GTRUTH2: [MessageHandler(filters.Regex("^(Tar|Ney|Setar|Santour|Kamancheh)$"), gtruth3)],
             GTRUTH3: [MessageHandler(filters.Regex("^(Tar|Ney|Setar|Santour|Kamancheh)$"), credit)],

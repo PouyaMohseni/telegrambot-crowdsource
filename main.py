@@ -1,9 +1,8 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ConversationHandler
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram.ext import CommandHandler, MessageHandler, filters, ConversationHandler
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 import pandas as pd
-from telegram import Update, InputFile
+from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-import re
 import logging
 
 
@@ -18,10 +17,11 @@ logger = logging.getLogger(__name__)
 
 
 ABILITY, GTRUTH1, GTRUTH2, GTRUTH3 = range(4)
-INSTRUMENT, END_ANNOT = range(2)
+INSTRUMENT, IMPROV, END_ANNOT = range(3)
 
 all_instruments = ["tar", "ney", "setar", "santour", "kamancheh"]
 
+farsi_instruments = {"tar": "تار", "ney": "نی", "setar": "سه تار", "santour": "سنتور", "kamancheh": "کمانچه"}
 ability_mapping = {
             "کم: آشنایی کمی با سازهای موسیقی دارم": 0,
             "متوسط: با تفاوت های بعضی از سازهای موسیقی آشنا هستم": 1,
@@ -40,8 +40,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         ]
 
     await update.message.reply_text(
-        "به آزمايشگاه موسيثي سنتي ايراني خوش آمديد. "
-        "برای توقف دکمه /cancel را فشار دهید \n\n"
+        "به آزمايشگاه موسيقی سنتي ايراني خوش آمديد. "
+        "برای توقف دکمه /cancel را فشار دهید. \n\n"
         "در ابتدا مهارت شنیداری موسیقی (Ear-training) شما بررسی میشود. \n\n"
         "چقدر گوش موسیقی شما آموزش دیده است؟",
         reply_markup=ReplyKeyboardMarkup(
@@ -86,7 +86,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=ReplyKeyboardRemove(),
     )
 
-    reply_keyboard = [["Tar", "Ney", "Kamancheh"], ["Setar", "Santour"]]
+    reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور"]]
     
     audio_file = open("./dataset/truth/track 1.mp3", "rb")
     await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
@@ -113,12 +113,12 @@ async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=ReplyKeyboardRemove(),
     )
 
-    answer = text=="Ney"
+    answer = text=="نی"
     df = pd.read_excel('./dataframe/user.xlsx')
     df.loc[df['chat_id'] == chat_id, 'correct'] = df.loc[df['chat_id'] == chat_id, 'correct'] + answer
     df.to_excel('./dataframe/user.xlsx', index=False)
     
-    reply_keyboard = [["Tar", "Ney", "Kamancheh"], ["Setar", "Santour"]]
+    reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور"]]
 
     audio_file = open("./dataset/truth/track 2.mp3", "rb")
     await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
@@ -144,12 +144,12 @@ async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=ReplyKeyboardRemove(),
     )
 
-    answer = text=="Kamancheh"
+    answer = text=="کمانچه"
     df = pd.read_excel('./dataframe/user.xlsx')
     df.loc[df['chat_id'] == chat_id, 'correct'] = df.loc[df['chat_id'] == chat_id, 'correct'] + answer
     df.to_excel('./dataframe/user.xlsx', index=False)
 
-    reply_keyboard = [["Tar", "Ney", "Kamancheh"], ["Setar", "Santour"]]
+    reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور"]]
 
     audio_file = open("./dataset/truth/track 3.mp3", "rb")
     await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
@@ -171,7 +171,7 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text = update.message.text
     logger.info("ability of %s: %s", user.first_name, update.message.text)
 
-    answer = text=="Tar"
+    answer = text=="تار"
     df = pd.read_excel('./dataframe/user.xlsx')
     df.loc[df['chat_id'] == chat_id, 'correct'] += answer
 
@@ -199,7 +199,6 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = update.message.from_user
-    text = update.message.text
     logger.info("ability of %s: %s", user.first_name, update.message.text)
     
     await update.message.reply_text(
@@ -245,20 +244,6 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     random_sample = filtered_samples.sample(n=1)
     sample_id = random_sample['sample_id'].values[0]
 
-    # Send this sample
-    audio_file = open(f"./dataset/samples/{sample_id}.mp3", "rb")
-    await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
-    audio_file.close()
-
-    reply_keyboard = [["No", "Yes"]]
-    await update.message.reply_text(
-        "آيا قطعه *خواننده* داشت؟",
-        reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Singer?"
-        ),
-        parse_mode='Markdown',
-    )
-
     # Construct the list of instruments
     sample_instruments = random_sample.drop(columns=["sample_id", "level", "num_annotation", "singer"])
     instruments = sample_instruments.columns[sample_instruments.eq(1).any()].tolist()
@@ -269,6 +254,51 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     context.user_data["annotations"] = basic_annotation
     context.user_data["last_instrument"] = "singer"
 
+    # Send this sample
+    audio_file = open(f"./dataset/samples/{sample_id}.mp3", "rb")
+    await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
+    audio_file.close()
+    
+    # Ask for singer
+    reply_keyboard = [["بله", "خیر"]]
+    await update.message.reply_text(
+        "آيا قطعه *خواننده* داشت؟",
+        reply_markup=ReplyKeyboardMarkup(
+            reply_keyboard, one_time_keyboard=True, input_field_placeholder="خواننده?"
+        ),
+        parse_mode='Markdown',
+    )
+
+    # Make the context
+    context.user_data["sample_id"] = sample_id
+    context.user_data["instruments"] = instruments
+    context.user_data["annotations"] = basic_annotation
+    context.user_data["last_instrument"] = "singer"
+
+    if len(context.user_data["instruments"]) > 0:
+        next_instrument = context.user_data["instruments"].pop(0)
+        context.user_data["next_instrument"] = next_instrument
+        return INSTRUMENT
+        
+    
+    return END_ANNOT
+
+
+async def improv(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_id = update.message.chat_id
+    text = update.message.text
+
+    if text == "Yes":
+        reply_keyboard = [["بداهه", "شعر", "غیرقابل تشخیص"]]
+        await update.message.reply_text(
+            "آواز به صورت بداهه بود یا شعر؟",
+            reply_markup=ReplyKeyboardMarkup(
+                reply_keyboard, one_time_keyboard=True, input_field_placeholder="نوع آواز?"
+            ),
+            parse_mode='Markdown',
+        )
+
+    # Save the annotation in the context
     if len(context.user_data["instruments"]) > 0:
         next_instrument = context.user_data["instruments"].pop(0)
         context.user_data["next_instrument"] = next_instrument
@@ -287,7 +317,7 @@ async def instrument(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     # Ask the kamancheh annotation
     reply_keyboard = [["0", "1", "2"]]
     await update.message.reply_text(
-        f"صدای *{instrument}* در قطعه چقدر قوی بود؟",
+        f"صدای *{farsi_instruments[instrument]}* در قطعه چقدر قوی بود؟",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{instrument}?"
         ),
@@ -332,8 +362,8 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     
     # Finish replay
     await update.message.reply_text(
-        "برچسب زني اين قطعه پايان يافت. بسيار متشکريم!"
-        "براي برچسب زني يک قطعه ديگر /annotate را فشار دهيد.",
+        "برچسب زنی این قطعه پایان یافت. بسیار متشکریم!"
+        "برای برچسب زني يک قطعه ديگر /annotate را فشار دهيد.",
         reply_markup=ReplyKeyboardRemove(),
     )
         
@@ -357,35 +387,47 @@ def main()-> None:
     app = ApplicationBuilder().token("6900009914:AAGomuchkUQ-hFQcVQLtK7E8gJXrRU4AwN0").build()
 
     conv_handler = ConversationHandler(
-            entry_points=[CommandHandler("start", start)],
+            entry_points = [CommandHandler("start", start)],
             states={
                 ABILITY: [MessageHandler(filters.Regex("^(کم: آشنایی کمی با سازهای موسیقی دارم|متوسط: با تفاوت های بعضی از سازهای موسیقی آشنا هستم|زیاد: گوش موسیقی من آموزش دیده است)$"), gtruth1)],
-                GTRUTH1: [MessageHandler(filters.Regex("^(Tar|Ney|Setar|Santour|Kamancheh)$"), gtruth2)],
-                GTRUTH2: [MessageHandler(filters.Regex("^(Tar|Ney|Setar|Santour|Kamancheh)$"), gtruth3)],
-                GTRUTH3: [MessageHandler(filters.Regex("^(Tar|Ney|Setar|Santour|Kamancheh)$"), credit)],
+                GTRUTH1: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور)$"), gtruth2)],
+                GTRUTH2: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور)$"), gtruth3)],
+                GTRUTH3: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور)$"), credit)],
             },
             fallbacks=[CommandHandler("cancel", cancel)],
         )
-
+    '''
+    annotation_handler = ConversationHandler(
+            entry_points = [CommandHandler("annotate", annotate)],
+            states={
+                IMPROV: [MessageHandler(filters.Regex("^(YES|No)$"), improv)],
+                INSTRUMENT: [MessageHandler(filters.Regex("^(0|1|2|تحریر|شعر|غیرقابل تشخیص)$"), instrument)],
+                END_ANNOT: [MessageHandler(filters.Regex("^(0|1|2|تحریر|شعر|غیرقابل تشخیص)$"), end_annotation)],
+            },
+            fallbacks=[CommandHandler("cancel_annotation", cancel_annotation)],
+        )
+    '''
+    
 
     annotation_handler = ConversationHandler(
             entry_points=[CommandHandler("annotate", annotate)],
             states={
-                INSTRUMENT: [MessageHandler(filters.Regex("^(0|1|2|Yes|No)$"), instrument)],
-                END_ANNOT: [MessageHandler(filters.Regex("^(0|1|2|Yes|No)$"), end_annotation)],
+                INSTRUMENT: [MessageHandler(filters.Regex("^(0|1|2|بله|خیر)$"), instrument)],
+                END_ANNOT: [MessageHandler(filters.Regex("^(0|1|2|بله|خیر)$"), end_annotation)],
             },
             fallbacks=[CommandHandler("cancel_annotation", cancel_annotation)],
         )
-
+    
     app.add_handler(conv_handler)
     app.add_handler(annotation_handler)
 
     app.run_polling()
-    updater.idle()
 
 
 
 
 if __name__ == "__main__":
     main()
+
+
 

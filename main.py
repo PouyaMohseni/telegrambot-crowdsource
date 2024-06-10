@@ -6,6 +6,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import logging
 
 
+
 # Enable logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 ABILITY, GTRUTH1, GTRUTH2, GTRUTH3 = range(4)
-INSTRUMENT, IMPROV, END_ANNOT = range(3)
+INSTRUMENT, AVAZ, END_ANNOT = range(3)
 
 all_instruments = ["tar", "ney", "setar", "santour", "kamancheh"]
 
@@ -28,19 +29,18 @@ ability_mapping = {
             "زیاد: گوش موسیقی من آموزش دیده است": 2
     }
 basic_annotation = {instrument: -1 for instrument in all_instruments}
-
+avaz_mapping = {"تحریر": 2, "شعر": 1, "وجود نداشت": 0}
 
 # Start the bot
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
-    reply_keyboard = [
+    reply_keyboard = [ #راز به راست
             ["کم: آشنایی کمی با سازهای موسیقی دارم"],
             ["متوسط: با تفاوت های بعضی از سازهای موسیقی آشنا هستم"],
             ["زیاد: گوش موسیقی من آموزش دیده است"]
         ]
 
     await update.message.reply_text(
-        "به آزمايشگاه موسيقی سنتي ايراني خوش آمديد. "
         "برای توقف دکمه /cancel را فشار دهید. \n\n"
         "در ابتدا مهارت شنیداری موسیقی (Ear-training) شما بررسی میشود. \n\n"
         "چقدر گوش موسیقی شما آموزش دیده است؟",
@@ -69,20 +69,21 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if chat_id in df['chat_id'].values:
         df.loc[df['chat_id'] == chat_id, 'answer'] = ability
         df.loc[df['chat_id'] == chat_id, ['correct', 'credit', 'level']] = 0
-        await update.message.reply_text('متشکرم! پاسخ قبلي شما به روز رساني شد.')
+        await update.message.reply_text("متشکرم! پاسخ قبلی شما به روز رسانی شد.")
 
     else:
         # Append the new answer
         new_entry = pd.DataFrame([[chat_id, ability]], columns=['chat_id', 'answer'])
         df = pd.concat([df, new_entry], ignore_index=True)
-        await update.message.reply_text('متشکرم! پاسخ شما ذخيره شد.')
+        await update.message.reply_text('متشکرم!')
 
     # Save the updated data
     df.to_excel('./dataframe/user.xlsx', index=False)
             
 
     await update.message.reply_text(       
-        "حال، در ادامه بررسی مهارت های شنیداری شما سه قطعه موسیقی برای شما پخش میشود. شما باید برای هر قطعه، از بین پنج ساز آورده شده در منوی پایینی، سازی که میشنوید را انتخاب کنید.",
+        "حال، برای بررسی مهارت های شنیداری شما سه قطعه موسیقی پخش میشود. برای هر قطعه، از بین پنج ساز آورده شده در منوی پایین، سازی را که میشنوید را انتخاب نمایید.",
+
         reply_markup=ReplyKeyboardRemove(),
     )
 
@@ -93,7 +94,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     audio_file.close()
     
     await update.message.reply_text(
-        "صداي چه سازي را شنيديد؟",
+        "چه سازی شنیده شد؟",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder="ساز؟"
         ),
@@ -108,10 +109,6 @@ async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text = update.message.text
     logger.info("ability of %s: %s", user.first_name, update.message.text)
 
-    await update.message.reply_text(
-        "پاسخ شما ذخيره شد.",
-        reply_markup=ReplyKeyboardRemove(),
-    )
 
     answer = text=="نی"
     df = pd.read_excel('./dataframe/user.xlsx')
@@ -125,7 +122,7 @@ async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     audio_file.close()
 
     await update.message.reply_text(
-        "صداي چه سازي را شنيديد؟",
+        "چه سازی شنیده شد؟",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder="ساز؟"
         ),
@@ -139,10 +136,6 @@ async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text = update.message.text
     logger.info("ability of %s: %s", user.first_name, update.message.text)
 
-    await update.message.reply_text(
-        "پاسخ شما ذخيره شد.",
-        reply_markup=ReplyKeyboardRemove(),
-    )
 
     answer = text=="کمانچه"
     df = pd.read_excel('./dataframe/user.xlsx')
@@ -156,7 +149,7 @@ async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     audio_file.close()
 
     await update.message.reply_text(
-        "صداي چه سازي را شنيديد؟",
+        "چه سازی شنیده شد؟",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder="ساز؟"
         ),
@@ -187,12 +180,28 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     df.to_excel('./dataframe/user.xlsx', index=False)
 
-           
-    await update.message.reply_text("بررسی مهارت های شنیداری شما پایان یافت. \n\n"
-        f"سطح شما {level} مي باشد. \n\n"
-        "برای برچسب زدن قطعات /annotate را فشار دهید",
-        reply_markup=ReplyKeyboardRemove(),
-    )
+    if level>=2:     
+        await update.message.reply_text(
+            "بررسی مهارت های شنیداری شما پایان یافت. \n\n"
+            f"سطح شما {level} می باشد. \n\n"
+            "برای برچسب زدن قطعات /annotate را فشار دهید.\n\n\n\n"
+            "در هر برچسب زنی یک قطعه پنج ثانیه ای ارسال میشود و احتمال حضور سازهای مختلف در این قطعه پرسیده میشود.\n\n"
+            "اگر صدای سازی را در قطعه نشنیدید، 0 را انتخاب کنید.\n"
+            "در صورتیکه صدای ساز را شنیدید ولی به نظرتان ساز اصلی نبود، 1 را انتخاب کنید.\n"
+            "و در آخر، اگر صدای ساز پرسیده شده در قطعه قوی بود، 2 را انتخاب کنید.\n\n"
+            "در هنگامی که صدای خواننده در قطعه وجود داشته باشد، در مورد وجود یا عدم وجود تحریر نیز پرسیده میشود.\n\n"
+            "تحریر یا چَهچَهه (چَه‌چَه) نوعی زینت آوازی است که به وسیله آن خواننده، صدایی آهنگین و *بدون کلام* را تولید می‌ کند.\n"
+            "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، -تحریر- را انتخاب کنید. در غیر این صورت، -آواز- را فشار دهید.",
+            reply_markup=ReplyKeyboardRemove(),
+            )
+    else:
+        await update.message.reply_text(
+            "بررسی مهارت های شنیداری شما پایان یافت. \n\n"
+            f"سطح شما {level} می باشد. \n\n"
+            "برای برچسب زدن قطعات /emotion را فشار دهید.",
+            reply_markup=ReplyKeyboardRemove(),
+        )
+
 
     return ConversationHandler.END
 
@@ -202,7 +211,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     logger.info("ability of %s: %s", user.first_name, update.message.text)
     
     await update.message.reply_text(
-        "از مشاکرت شما متشکريم.", reply_markup=ReplyKeyboardRemove()
+        "از مشارکت شما متشکریم!", reply_markup=ReplyKeyboardRemove()
     )
 
     return ConversationHandler.END
@@ -232,72 +241,110 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Return if there are no samples
     if filtered_samples.empty:
-        await update.message.reply_text(
-            "متاسفانه هیچ قطعه ای در این سطح وجود ندارد. \n\n"
-            "لطفا، بعدا با فشردن /annotate دوباره امتحان کنید.",
-            reply_markup=ReplyKeyboardRemove()
-        )
+        if level >= 2:
+            await update.message.reply_text(
+                "متاسفانه هیچ قطعه ای در این سطح وجود ندارد. \n\n"
+                "لطفا، بعدا با فشردن /annotate دوباره امتحان کنید.",
+                reply_markup=ReplyKeyboardRemove()
+            )
 
-        return ConversationHandler.END
+            return ConversationHandler.END
+        
+        else:
+            await update.message.reply_text(
+                "متاسفانه هیچ قطعه ای در این سطح وجود ندارد. \n\n"
+                "لطفا، بعدا با فشردن /emotion دوباره امتحان کنید.",
+                reply_markup=ReplyKeyboardRemove()
+            )
+
+            return ConversationHandler.END
         
     # Choose a random sample from the filtered samples
     random_sample = filtered_samples.sample(n=1)
     sample_id = random_sample['sample_id'].values[0]
 
     # Construct the list of instruments
-    sample_instruments = random_sample.drop(columns=["sample_id", "level", "num_annotation", "singer"])
+    sample_instruments = random_sample.drop(columns=["sample_id", "level", "num_annotation"])
     instruments = sample_instruments.columns[sample_instruments.eq(1).any()].tolist()
     
     # Make the context
     context.user_data["sample_id"] = sample_id
     context.user_data["instruments"] = instruments
     context.user_data["annotations"] = basic_annotation
-    context.user_data["last_instrument"] = "singer"
+    instrument = context.user_data["instruments"].pop(0)
+    context.user_data["last_instrument"] = instrument
 
     # Send this sample
     audio_file = open(f"./dataset/samples/{sample_id}.mp3", "rb")
     await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
     audio_file.close()
     
-    # Ask for singer
-    reply_keyboard = [["بله", "خیر"]]
-    await update.message.reply_text(
-        "آيا قطعه *خواننده* داشت؟",
-        reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="خواننده?"
-        ),
-        parse_mode='Markdown',
-    )
-
-    # Make the context
-    context.user_data["sample_id"] = sample_id
-    context.user_data["instruments"] = instruments
-    context.user_data["annotations"] = basic_annotation
-    context.user_data["last_instrument"] = "singer"
-
-    if len(context.user_data["instruments"]) > 0:
-        next_instrument = context.user_data["instruments"].pop(0)
-        context.user_data["next_instrument"] = next_instrument
-        return INSTRUMENT
-        
     
-    return END_ANNOT
-
-
-async def improv(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id = update.message.chat_id
-    text = update.message.text
-
-    if text == "Yes":
-        reply_keyboard = [["بداهه", "شعر", "غیرقابل تشخیص"]]
+    if instrument=="singer":
+        # Ask for singer annotation
+        '''
+            reply_keyboard = [["بله", "خیر"]]
+            await update.message.reply_text(
+                "آيا قطعه *خواننده* داشت؟",
+                reply_markup=ReplyKeyboardMarkup(
+                    reply_keyboard, one_time_keyboard=True, input_field_placeholder="خواننده?"
+                ),
+                parse_mode='Markdown',
+            )
+            return AVAZ
+        '''
+        reply_keyboard = [["تحریر", "شعر", "وجود نداشت"]]
         await update.message.reply_text(
-            "آواز به صورت بداهه بود یا شعر؟",
+                "صدای *خواننده* در قطعه چگونه بود؟",
+                reply_markup=ReplyKeyboardMarkup(
+                    reply_keyboard, one_time_keyboard=True, input_field_placeholder="خواننده؟"
+                ),
+                parse_mode='Markdown',
+            )
+        if len(context.user_data["instruments"]) > 0:
+            next_instrument = context.user_data["instruments"].pop(0)
+            context.user_data["next_instrument"] = next_instrument
+            return INSTRUMENT
+            
+        
+        return END_ANNOT 
+    
+            
+    else:
+        # Ask the instrument annotation
+        reply_keyboard = [["0", "1", "2"]]
+        await update.message.reply_text(
+            f"در قطعه ای که شنیدید صدای *{farsi_instruments[instrument]}* چقدر قوی بود؟",
+            reply_markup=ReplyKeyboardMarkup(
+                reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{instrument}?"
+            ),
+            parse_mode='Markdown',
+        )
+        if len(context.user_data["instruments"]) > 0:
+            next_instrument = context.user_data["instruments"].pop(0)
+            context.user_data["next_instrument"] = next_instrument
+            return INSTRUMENT
+            
+        
+        return END_ANNOT
+
+'''
+async def avaz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    text = update.message.text
+    context.user_data["annotations"][context.user_data["last_instrument"]] = text
+
+    if text == "بله":
+        reply_keyboard = [["تحریر", "شعر", "غیرقابل تشخیص"]]
+        await update.message.reply_text(
+            "آواز به صورت تحریر بود یا شعر؟",
             reply_markup=ReplyKeyboardMarkup(
                 reply_keyboard, one_time_keyboard=True, input_field_placeholder="نوع آواز?"
             ),
             parse_mode='Markdown',
         )
 
+    # context.user_data["last_instrument"] = instrument last instrument doesnt change
+
     # Save the annotation in the context
     if len(context.user_data["instruments"]) > 0:
         next_instrument = context.user_data["instruments"].pop(0)
@@ -306,18 +353,21 @@ async def improv(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         
     
     return END_ANNOT
+'''
+
 
 
 async def instrument(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Save the annotation in the context
     instrument = context.user_data["next_instrument"]
     text = update.message.text
+    if context.user_data["last_instrument"] == "singer": text = avaz_mapping[text] # Map if the text is from avaz
     context.user_data["annotations"][context.user_data["last_instrument"]] = text
 
     # Ask the kamancheh annotation
     reply_keyboard = [["0", "1", "2"]]
     await update.message.reply_text(
-        f"صدای *{farsi_instruments[instrument]}* در قطعه چقدر قوی بود؟",
+        f"در قطعه ای که شنیدید صدای *{farsi_instruments[instrument]}* چقدر قوی بود؟",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{instrument}?"
         ),
@@ -362,7 +412,7 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     
     # Finish replay
     await update.message.reply_text(
-        "برچسب زنی این قطعه پایان یافت. بسیار متشکریم!"
+        "برچسب زنی این قطعه پایان یافت. بسیار متشکریم! \n\n"
         "برای برچسب زني يک قطعه ديگر /annotate را فشار دهيد.",
         reply_markup=ReplyKeyboardRemove(),
     )
@@ -400,7 +450,7 @@ def main()-> None:
     annotation_handler = ConversationHandler(
             entry_points = [CommandHandler("annotate", annotate)],
             states={
-                IMPROV: [MessageHandler(filters.Regex("^(YES|No)$"), improv)],
+                AVAZ: [MessageHandler(filters.Regex("^(بله|خیر)$"), avaz)],
                 INSTRUMENT: [MessageHandler(filters.Regex("^(0|1|2|تحریر|شعر|غیرقابل تشخیص)$"), instrument)],
                 END_ANNOT: [MessageHandler(filters.Regex("^(0|1|2|تحریر|شعر|غیرقابل تشخیص)$"), end_annotation)],
             },
@@ -412,8 +462,8 @@ def main()-> None:
     annotation_handler = ConversationHandler(
             entry_points=[CommandHandler("annotate", annotate)],
             states={
-                INSTRUMENT: [MessageHandler(filters.Regex("^(0|1|2|بله|خیر)$"), instrument)],
-                END_ANNOT: [MessageHandler(filters.Regex("^(0|1|2|بله|خیر)$"), end_annotation)],
+                INSTRUMENT: [MessageHandler(filters.Regex("^(0|1|2|وجود نداشت|شعر|تحریر)$"), instrument)],
+                END_ANNOT: [MessageHandler(filters.Regex("^(0|1|2|وجود نداشت|شعر|تحریر)$"), end_annotation)],
             },
             fallbacks=[CommandHandler("cancel_annotation", cancel_annotation)],
         )

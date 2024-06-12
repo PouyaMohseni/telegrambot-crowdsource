@@ -20,9 +20,9 @@ logger = logging.getLogger(__name__)
 ABILITY, GTRUTH1, GTRUTH2, GTRUTH3 = range(4)
 INSTRUMENT, AVAZ, END_ANNOT = range(3)
 
-all_instruments = ["tar", "ney", "setar", "santour", "kamancheh"]
+all_instruments = ["tar", "ney", "setar", "santour", "kamancheh", "tonback"]
 
-farsi_instruments = {"tar": "تار", "ney": "نی", "setar": "سه تار", "santour": "سنتور", "kamancheh": "کمانچه"}
+farsi_instruments = {"tar": "تار", "ney": "نی", "setar": "سه تار", "santour": "سنتور", "kamancheh": "کمانچه", "tonbak":"تنبک"}
 ability_mapping = {
             "کم: آشنایی کمی با سازهای موسیقی دارم": 0,
             "متوسط: با تفاوت های بعضی از سازهای موسیقی آشنا هستم": 1,

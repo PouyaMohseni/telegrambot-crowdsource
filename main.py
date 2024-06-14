@@ -65,7 +65,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         df = pd.read_excel('./dataframe/user.xlsx')
     except FileNotFoundError:
-        df = pd.DataFrame(columns=['chat_id', 'answer', 'correct', 'credit', 'level'])
+        df = pd.DataFrame(columns=['chat_id', 'name', 'answer', 'correct', 'credit', 'level', 'num_annotation'])
 
     # Check if the user has already submitted an answer     
     if chat_id in df['chat_id'].values:
@@ -75,7 +75,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     else:
         # Append the new answer
-        new_entry = pd.DataFrame([[chat_id, ability]], columns=['chat_id', 'answer'])
+        new_entry = pd.DataFrame([[chat_id, user.first_name, ability]], columns=['chat_id', 'name', 'answer'])
         df = pd.concat([df, new_entry], ignore_index=True)
         await update.message.reply_text('متشکرم!')
 
@@ -174,8 +174,8 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     credit = (df[df['chat_id'] == chat_id]['correct'] + df[df['chat_id'] == chat_id]['answer']).values[0]
     df.loc[df['chat_id'] == chat_id, 'credit'] = credit
 
-    if credit == 5: level = 3
-    elif credit > 2: level = 2
+    if credit == 4: level = 3
+    elif credit >= 2: level = 2
     else: level = 1
     
     df.loc[df['chat_id'] == chat_id, 'level'] = level
@@ -412,6 +412,11 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     samples.loc[samples['sample_id'] == sample_id, 'num_annotation'] += 1
     samples.to_excel('./dataframe/samples.xlsx', index=False)
     
+
+    df = pd.read_excel('./dataframe/user.xlsx')
+    samples.loc[samples['id'] == chat_id, 'num_annotation'] += 1
+    samples.to_excel('./dataframe/user.xlsx', index=False)
+
     # Finish replay
     await update.message.reply_text(
         "برچسب زنی این قطعه پایان یافت. بسیار متشکریم! \n\n"

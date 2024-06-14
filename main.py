@@ -89,7 +89,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=ReplyKeyboardRemove(),
     )
 
-    reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور"]]
+    reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور", "تنبک"]]
     
     audio_file = open("./dataset/truth/track 1.mp3", "rb")
     await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
@@ -117,7 +117,7 @@ async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     df.loc[df['chat_id'] == chat_id, 'correct'] = df.loc[df['chat_id'] == chat_id, 'correct'] + answer
     df.to_excel('./dataframe/user.xlsx', index=False)
     
-    reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور"]]
+    reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور", "تنبک"]]
 
     audio_file = open("./dataset/truth/track 2.mp3", "rb")
     await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
@@ -144,7 +144,7 @@ async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     df.loc[df['chat_id'] == chat_id, 'correct'] = df.loc[df['chat_id'] == chat_id, 'correct'] + answer
     df.to_excel('./dataframe/user.xlsx', index=False)
 
-    reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور"]]
+    reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور", "تنبک"]]
 
     audio_file = open("./dataset/truth/track 3.mp3", "rb")
     await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
@@ -186,7 +186,7 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text(
             "بررسی مهارت های شنیداری شما پایان یافت\\. \n\n"
             f"سطح شما {level} می باشد\\. \n\n"
-            "برای برچسب زدن قطعات /annotate را فشار دهید\\. \n\n\n\n"
+            "برای برچسب زدن قطعات /annotate را فشار دهید\\. \n\n"
             "هربار، یک قطعه پنج ثانیه ای ارسال میشود و احتمال حضور سازهای مختلف در این قطعه پرسیده میشود\\. \n\n"
             "اگر صدای سازی را در قطعه نشنیدید، 0 را انتخاب کنید\\. \n"
             "در صورتیکه صدای ساز را شنیدید، بین 1 و 2 بسته به قدرت صدا، انتخاب کنید\\. \n\n"
@@ -318,7 +318,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text(
             f"در قطعه ای که شنیدید صدای *{farsi_instruments[instrument]}* چقدر قوی بود؟",
             reply_markup=ReplyKeyboardMarkup(
-                reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{instrument}?"
+                reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{farsi_instruments[instrument]}?"
             ),
             parse_mode='Markdown',
         )

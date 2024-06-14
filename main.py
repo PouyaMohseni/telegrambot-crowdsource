@@ -1,5 +1,5 @@
 from telegram.ext import CommandHandler, MessageHandler, filters, ConversationHandler
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 import pandas as pd
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
@@ -25,7 +25,7 @@ all_instruments = ["tar", "ney", "setar", "santour", "kamancheh", "tonback"]
 farsi_instruments = {"tar": "تار", "ney": "نی", "setar": "سه تار", "santour": "سنتور", "kamancheh": "کمانچه", "tonbak":"تنبک"}
 ability_mapping = {
             "کم: آشنایی کمی با سازهای موسیقی دارم": 0,
-            "متوسط: با تفاوت های بعضی از سازهای موسیقی آشنا هستم": 0.5,
+            "متوسط: با تفاوت صوتی برخی از سازهای موسیقی آشنا هستم": 0.5,
             "زیاد: گوش موسیقی من آموزش دیده است": 1
     }
 basic_annotation = {instrument: -1 for instrument in all_instruments}
@@ -37,7 +37,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     reply_keyboard = [ #راز به راست
             ["کم: آشنایی کمی با سازهای موسیقی دارم"],
-            ["متوسط: با تفاوت های بعضی از سازهای موسیقی آشنا هستم"],
+            ["متوسط: با تفاوت صوتی برخی از سازهای موسیقی آشنا هستم"],
             ["زیاد: گوش موسیقی من آموزش دیده است"]
         ]
 
@@ -45,7 +45,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         "برای توقف دکمه /cancel را فشار دهید. \n\n"
         "در ابتدا مهارت شنیداری موسیقی (Ear-training) شما بررسی میشود. \n\n"
-        "چقدر گوش موسیقی شما آموزش دیده است؟",
+        "گوش موسیقی شما چقدر قوی است؟",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder="سطح گوش موسيقی"
         ),
@@ -84,7 +84,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             
 
     await update.message.reply_text(       
-        "حال، برای بررسی مهارت های شنیداری شما سه قطعه موسیقی پخش میشود. برای هر قطعه، از بین پنج ساز آورده شده در منوی پایین، سازی را که میشنوید را انتخاب نمایید.",
+        "حال، برای بررسی مهارت های شنیداری شما، سه قطعه موسیقی پخش میشود. برای هر قطعه، از بین پنج ساز آورده شده در منوی پایین، سازی را که میشنوید را انتخاب نمایید.",
 
         reply_markup=ReplyKeyboardRemove(),
     )
@@ -184,17 +184,17 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     if level>=2:     
         await update.message.reply_text(
-            "بررسی مهارت های شنیداری شما پایان یافت. \n\n"
-            f"سطح شما {level} می باشد. \n\n"
-            "برای برچسب زدن قطعات /annotate را فشار دهید.\n\n\n\n"
-            "در هر برچسب زنی یک قطعه پنج ثانیه ای ارسال میشود و احتمال حضور سازهای مختلف در این قطعه پرسیده میشود.\n\n"
-            "اگر صدای سازی را در قطعه نشنیدید، 0 را انتخاب کنید.\n"
-            "در صورتیکه صدای ساز را شنیدید ولی به نظرتان ساز اصلی نبود، 1 را انتخاب کنید.\n"
-            "و در آخر، اگر صدای ساز پرسیده شده در قطعه قوی بود، 2 را انتخاب کنید.\n\n"
-            "در هنگامی که صدای خواننده در قطعه وجود داشته باشد، در مورد وجود یا عدم وجود تحریر نیز پرسیده میشود.\n\n"
-            "تحریر یا چَهچَهه (چَه‌چَه) نوعی زینت آوازی است که به وسیله آن خواننده، صدایی آهنگین و *بدون کلام* را تولید می‌ کند.\n"
-            "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، -تحریر- را انتخاب کنید. در غیر این صورت، -آواز- را فشار دهید.",
+            "بررسی مهارت های شنیداری شما پایان یافت\\. \n\n"
+            f"سطح شما {level} می باشد\\. \n\n"
+            "برای برچسب زدن قطعات /annotate را فشار دهید\\. \n\n\n\n"
+            "هربار، یک قطعه پنج ثانیه ای ارسال میشود و احتمال حضور سازهای مختلف در این قطعه پرسیده میشود\\. \n\n"
+            "اگر صدای سازی را در قطعه نشنیدید، 0 را انتخاب کنید\\. \n"
+            "در صورتیکه صدای ساز را شنیدید، بین 1 و 2 بسته به قدرت صدا، انتخاب کنید\\. \n\n"
+            "در هنگامی که صدای خواننده در قطعه وجود داشته باشد، در مورد وجود یا عدم وجود تحریر نیز پرسیده میشود\\. \n\n"
+            ">تحریر یا چَهچَهه \\(چَه‌چَه\\) نوعی زینت آوازی است که به وسیله آن خواننده، صدایی آهنگین و *بدون کلام* را تولید می‌ کند\\. \n\n"
+            "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، *تحریر* را انتخاب کنید\\. در غیر این صورت، *آواز* را فشار دهید\\.",
             reply_markup=ReplyKeyboardRemove(),
+            parse_mode='MarkdownV2',
             )
     else:
         await update.message.reply_text(
@@ -441,7 +441,7 @@ def main()-> None:
     conv_handler = ConversationHandler(
             entry_points = [CommandHandler("start", start)],
             states={
-                ABILITY: [MessageHandler(filters.Regex("^(کم: آشنایی کمی با سازهای موسیقی دارم|متوسط: با تفاوت های بعضی از سازهای موسیقی آشنا هستم|زیاد: گوش موسیقی من آموزش دیده است)$"), gtruth1)],
+                ABILITY: [MessageHandler(filters.Regex("^(کم: آشنایی کمی با سازهای موسیقی دارم|متوسط: با تفاوت صوتی برخی از سازهای موسیقی آشنا هستم|زیاد: گوش موسیقی من آموزش دیده است)$"), gtruth1)],
                 GTRUTH1: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور)$"), gtruth2)],
                 GTRUTH2: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور)$"), gtruth3)],
                 GTRUTH3: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور)$"), credit)],

@@ -1,5 +1,5 @@
 from telegram.ext import CommandHandler, MessageHandler, filters, ConversationHandler
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton
 import pandas as pd
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
@@ -25,8 +25,8 @@ all_instruments = ["tar", "ney", "setar", "santour", "kamancheh", "tonback"]
 farsi_instruments = {"tar": "تار", "ney": "نی", "setar": "سه تار", "santour": "سنتور", "kamancheh": "کمانچه", "tonbak":"تنبک"}
 ability_mapping = {
             "کم: آشنایی کمی با سازهای موسیقی دارم": 0,
-            "متوسط: با تفاوت های بعضی از سازهای موسیقی آشنا هستم": 1,
-            "زیاد: گوش موسیقی من آموزش دیده است": 2
+            "متوسط: با تفاوت های بعضی از سازهای موسیقی آشنا هستم": 0.5,
+            "زیاد: گوش موسیقی من آموزش دیده است": 1
     }
 basic_annotation = {instrument: -1 for instrument in all_instruments}
 avaz_mapping = {"تحریر": 2, "شعر": 1, "وجود نداشت": 0}
@@ -34,18 +34,20 @@ avaz_mapping = {"تحریر": 2, "شعر": 1, "وجود نداشت": 0}
 # Start the bot
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
+
     reply_keyboard = [ #راز به راست
             ["کم: آشنایی کمی با سازهای موسیقی دارم"],
             ["متوسط: با تفاوت های بعضی از سازهای موسیقی آشنا هستم"],
             ["زیاد: گوش موسیقی من آموزش دیده است"]
         ]
 
+
     await update.message.reply_text(
         "برای توقف دکمه /cancel را فشار دهید. \n\n"
         "در ابتدا مهارت شنیداری موسیقی (Ear-training) شما بررسی میشود. \n\n"
         "چقدر گوش موسیقی شما آموزش دیده است؟",
         reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="سطح گوش موسيقي"
+            reply_keyboard, one_time_keyboard=True, input_field_placeholder="سطح گوش موسيقی"
         ),
     )
 
@@ -57,7 +59,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.message.from_user
     chat_id = update.message.chat_id
     text = update.message.text
-    logger.info("ability of %s: %s", user.first_name, update.message.text)
+    logger.info("ability of %s: %s", user.first_name, text)
     ability = ability_mapping[text]
 
     try:

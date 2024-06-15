@@ -31,7 +31,7 @@ ability_mapping = {
     }
 avaz_mapping = {"هر دو":3, "تحریر": 2, "شعر": 1, "وجود نداشت": 0}
 familiar_mapping = {"آشنا نیست": 0, "تا حدودی آشناست": 1, "بسیار آشناست": 2}
-emotion_mapping = {"[شادی، قدرت، شگفتی]": "Q1", "[خشم، ترس، تنش]": "Q2", "[غم، تلخی]": "Q3", "[آرامش، لطافت، تعالی]": "Q4"}
+emotion_mapping = {"شادی، قدرت، شگفتی": "Q1", "خشم، ترس، تنش": "Q2", "غم، تلخی": "Q3", "آرامش، لطافت، تعالی": "Q4"}
 
 basic_annotation = {instrument: -1 for instrument in all_instruments}
 
@@ -429,7 +429,7 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # Finish replay
     await update.message.reply_text(
         "برچسب زنی این قطعه پایان یافت. بسیار متشکریم! \n\n"
-        "برای برچسب زني يک قطعه ديگر /annotate را فشار دهيد.",
+        "برای برچسب زنی يک قطعه ديگر /annotate را فشار دهيد.",
         reply_markup=ReplyKeyboardRemove(),
     )
         
@@ -598,10 +598,10 @@ async def emotion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     row = context.user_data["rate"]
     row.update({"sample_id": sample_id, "chat_id": chat_id, "level": level})
     
-    df = pd.read_excel('./dataframe/emotion_annotation.xlsx')
+    df = pd.read_excel('./dataframe/emotion.xlsx')
     df_row = pd.DataFrame([row])
     output = pd.concat([df, df_row], ignore_index=True)
-    output.to_excel('./dataframe/emotion_annotation.xlsx', index=False)
+    output.to_excel('./dataframe/emotion.xlsx', index=False)
 
     # Iterate an annotation
     samples = pd.read_excel('./dataframe/emotion_samples.xlsx')
@@ -616,7 +616,7 @@ async def emotion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Finish replay
     await update.message.reply_text(
         "برچسب زنی این قطعه پایان یافت. بسیار متشکریم! \n\n"
-        "برای برچسب زني يک قطعه ديگر /rate را فشار دهيد.",
+        "برای برچسب زنی يک قطعه ديگر /rate را فشار دهيد.",
         reply_markup=ReplyKeyboardRemove(),
     )
         

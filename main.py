@@ -1,10 +1,9 @@
 from telegram.ext import CommandHandler, MessageHandler, filters, ConversationHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
-import pandas as pd
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import logging
-
+import pandas as pd
 
 
 # Enable logging
@@ -63,7 +62,6 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.message.from_user
     chat_id = update.message.chat_id
     text = update.message.text
-    logger.info("ability of %s: %s", user.first_name, text)
     ability = ability_mapping[text]
 
     try:
@@ -74,7 +72,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Check if the user has already submitted an answer     
     if chat_id in df['chat_id'].values:
         df.loc[df['chat_id'] == chat_id, 'answer'] = ability
-        df.loc[df['chat_id'] == chat_id, ['correct', 'credit', 'level']] = 0
+        df.loc[df['chat_id'] == chat_id, ['correct', 'credit', 'level', 'num_annotation']] = 0
         await update.message.reply_text("متشکرم! پاسخ قبلی شما به روز رسانی شد.")
 
     else:
@@ -113,7 +111,6 @@ async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.message.from_user
     chat_id = update.message.chat_id
     text = update.message.text
-    logger.info("ability of %s: %s", user.first_name, update.message.text)
 
 
     answer = text=="نی"
@@ -140,7 +137,6 @@ async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.message.from_user
     chat_id = update.message.chat_id
     text = update.message.text
-    logger.info("ability of %s: %s", user.first_name, update.message.text)
 
 
     answer = text=="کمانچه"
@@ -168,7 +164,6 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.message.from_user
     chat_id = update.message.chat_id
     text = update.message.text
-    logger.info("ability of %s: %s", user.first_name, update.message.text)
 
     answer = text=="تار"
     df = pd.read_excel('./dataframe/user.xlsx')
@@ -217,7 +212,6 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = update.message.from_user
-    logger.info("ability of %s: %s", user.first_name, update.message.text)
     
     await update.message.reply_text(
         "از مشارکت شما متشکریم!", reply_markup=ReplyKeyboardRemove()

@@ -285,7 +285,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     context.user_data['level'] = level
 
     # Send this sample
-    audio_file = open(f"./dataset/samples/{sample_id}.mp3", "rb")
+    audio_file = open(f"./dataset/annotation_samples/{sample_id}", "rb")
     await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
     audio_file.close()
     
@@ -496,7 +496,7 @@ async def rate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     sample_id = random_sample['sample_id'].values[0]
 
     # Send this sample
-    audio_file = open(f"./dataset/samples/{sample_id}.mp3", "rb")
+    audio_file = open(f"./dataset/emotion_samples/{sample_id}", "rb")
     await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
     audio_file.close()
     
@@ -682,7 +682,7 @@ def main()-> None:
                 FAMILIAR: [MessageHandler(filters.Regex("^(آشنا نیست|تا حدودی آشناست|بسیار آشناست)$"), familiar)],
                 LIKE: [MessageHandler(filters.Regex("^(1|2|3|4)$"), like)],
                 QUALITY: [MessageHandler(filters.Regex("^(1|2|3|4)$"), quality)],
-                EMOTION: [MessageHandler(filters.Regex("^(شادی، قدرت، شگفتی|خشم، ترس، تنش|غم، تلخی|آرامش، لطافت، تعالی])$"), emotion)],
+                EMOTION: [MessageHandler(filters.Regex("^(شادی، قدرت، شگفتی|خشم، ترس، تنش|غم، تلخی|آرامش، لطافت، تعالی)$"), emotion)],
             },
             fallbacks=[CommandHandler("cancel_rate", cancel_rate)],
         )

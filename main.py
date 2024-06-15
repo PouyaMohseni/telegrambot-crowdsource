@@ -88,7 +88,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             
 
     await update.message.reply_text(       
-        "حال، برای بررسی مهارت های شنیداری شما، سه قطعه موسیقی پخش میشود. برای هر قطعه، از بین پنج ساز آورده شده در منوی پایین، سازی را که میشنوید را انتخاب نمایید.",
+        "حال، برای بررسی مهارت های شنیداری شما، سه قطعه موسیقی پخش میشود. برای هر قطعه، از بین پنج ساز آورده شده در منوی پایین، سازی را که میشنوید، انتخاب نمایید.",
 
         reply_markup=ReplyKeyboardRemove(),
     )
@@ -96,7 +96,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور", "تنبک"]]
     
     audio_file = open("./dataset/truth/track 1.mp3", "rb")
-    await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
+    await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="track 1")
     audio_file.close()
     
     await update.message.reply_text(
@@ -124,7 +124,7 @@ async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور", "تنبک"]]
 
     audio_file = open("./dataset/truth/track 2.mp3", "rb")
-    await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
+    await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="track 2")
     audio_file.close()
 
     await update.message.reply_text(
@@ -151,7 +151,7 @@ async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور", "تنبک"]]
 
     audio_file = open("./dataset/truth/track 3.mp3", "rb")
-    await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
+    await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="track 3")
     audio_file.close()
 
     await update.message.reply_text(
@@ -178,8 +178,8 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     credit = (df[df['chat_id'] == chat_id]['correct'] + df[df['chat_id'] == chat_id]['answer']).values[0]
     df.loc[df['chat_id'] == chat_id, 'credit'] = credit
 
-    if credit == 2.5: level = 3
-    elif credit >= 2: level = 2
+    if credit == 3.5: level = 3
+    elif credit > 1.5: level = 2
     else: level = 1
     
     df.loc[df['chat_id'] == chat_id, 'level'] = level
@@ -195,7 +195,7 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             "اگر صدای سازی را در قطعه نشنیدید، 0 را انتخاب کنید\\. \n"
             "در صورتیکه صدای ساز را شنیدید، بین 1، 2 و 3 بسته به پرنگی حضور صدای ساز، انتخاب کنید\\. \n\n"
             "در هنگامی که صدای خواننده در قطعه وجود داشته باشد، در مورد وجود یا عدم وجود تحریر نیز پرسیده میشود\\. \n\n"
-            ">تحریر یا چَهچَهه \\(چَه‌چَه\\) نوعی زینت آوازی است که به وسیله آن خواننده، صدایی آهنگین و *بدون کلام* را تولید می‌ کند\\."
+            ">تحریر یا چَهچَهه \\(چَه‌چَه\\) نوعی زینت آوازی است که به وسیله آن خواننده، صدایی آهنگین و *بدون کلام* را تولید می‌ کند\\.\n"
             ">بنابراین با این تعریف، هر صوتی از خواننده که بدون کلام باشد *تحریر* است\\. \n\n"
             "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، *تحریر* را انتخاب کنید\\. در غیر این صورت، *آواز* را فشار دهید\\.",
             reply_markup=ReplyKeyboardRemove(),
@@ -286,7 +286,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Send this sample
     audio_file = open(f"./dataset/annotation_samples/{sample_id}", "rb")
-    await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
+    await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="#m"+sample_id.replace('-','_'))
     audio_file.close()
     
     
@@ -324,9 +324,9 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         # Ask the instrument annotation
         reply_keyboard = [["0", "1", "2","3"]]
         await update.message.reply_text(
-            f"در قطعه ای که شنیدید صدای *{farsi_instruments[instrument]}* چقدر قوی بود؟",
+            f"در قطعه ای که شنیدید صدای *{farsi_instruments[instrument]}* چقدر قوی بود؟(3=بیشترین / 0=عدم حضور)",
             reply_markup=ReplyKeyboardMarkup(
-                reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{farsi_instruments[instrument]}?"
+                reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{farsi_instruments[instrument]}؟"
             ),
             parse_mode='Markdown',
         )
@@ -377,9 +377,9 @@ async def instrument(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     # Ask the kamancheh annotation 
     reply_keyboard = [["0", "1", "2", "3"]]
     await update.message.reply_text(
-        f"در قطعه ای که شنیدید حضور ساز *{farsi_instruments[instrument]}* (3=بیشترین / 0=عدم حضور)چقدر پرنگ بود؟",
+        f"در قطعه ای که شنیدید حضور ساز *{farsi_instruments[instrument]}* چقدر پرنگ بود؟(3=بیشترین / 0=عدم حضور)",
         reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{instrument}?"
+            reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{farsi_instruments[instrument]}؟"
         ),
         parse_mode='Markdown',
     )
@@ -497,7 +497,7 @@ async def rate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Send this sample
     audio_file = open(f"./dataset/emotion_samples/{sample_id}", "rb")
-    await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
+    await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="#m"+sample_id.replace('_','.'))
     audio_file.close()
     
     # Make a user context
@@ -680,8 +680,8 @@ def main()-> None:
             entry_points=[CommandHandler("rate", rate)],
             states={
                 FAMILIAR: [MessageHandler(filters.Regex("^(آشنا نیست|تا حدودی آشناست|بسیار آشناست)$"), familiar)],
-                LIKE: [MessageHandler(filters.Regex("^(1|2|3|4)$"), like)],
-                QUALITY: [MessageHandler(filters.Regex("^(1|2|3|4)$"), quality)],
+                LIKE: [MessageHandler(filters.Regex("^(1|2|3|4|5)$"), like)],
+                QUALITY: [MessageHandler(filters.Regex("^(1|2|3|4|5)$"), quality)],
                 EMOTION: [MessageHandler(filters.Regex("^(شادی، قدرت، شگفتی|خشم، ترس، تنش|غم، تلخی|آرامش، لطافت، تعالی)$"), emotion)],
             },
             fallbacks=[CommandHandler("cancel_rate", cancel_rate)],

@@ -19,17 +19,21 @@ logger = logging.getLogger(__name__)
 
 ABILITY, GTRUTH1, GTRUTH2, GTRUTH3 = range(4)
 INSTRUMENT, AVAZ, END_ANNOT = range(3)
+FAMILIAR, LIKE, QUALITY, EMOTION = range(4)
 
-all_instruments = ["tar", "ney", "setar", "santour", "kamancheh", "tonback"]
+all_instruments = ["singer", "tar", "ney", "setar", "santour", "kamancheh", "tonback"]
 
-farsi_instruments = {"tar": "تار", "ney": "نی", "setar": "سه تار", "santour": "سنتور", "kamancheh": "کمانچه", "tonbak":"تنبک"}
+farsi_instruments = {"singer": "آواز", "tar": "تار", "ney": "نی", "setar": "سه تار", "santour": "سنتور", "kamancheh": "کمانچه", "tonbak":"تنبک"}
 ability_mapping = {
             "کم: آشنایی کمی با سازهای موسیقی دارم": 0,
             "متوسط: با تفاوت صوتی برخی از سازهای موسیقی آشنا هستم": 0.5,
             "زیاد: گوش موسیقی من آموزش دیده است": 1
     }
+avaz_mapping = {"هر دو":3, "تحریر": 2, "شعر": 1, "وجود نداشت": 0}
+familiar_mapping = {"آشنا نیست": 0, "تا حدودی آشناست": 1, "بسیار آشناست": 2}
+emotion_mapping = {"[شادی، قدرت، شگفتی]": "Q1", "[خشم، ترس، تنش]": "Q2", "[غم، تلخی]": "Q3", "[آرامش، لطافت، تعالی]": "Q4"}
+
 basic_annotation = {instrument: -1 for instrument in all_instruments}
-avaz_mapping = {"تحریر": 2, "شعر": 1, "وجود نداشت": 0}
 
 # Start the bot
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -174,7 +178,7 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     credit = (df[df['chat_id'] == chat_id]['correct'] + df[df['chat_id'] == chat_id]['answer']).values[0]
     df.loc[df['chat_id'] == chat_id, 'credit'] = credit
 
-    if credit == 4: level = 3
+    if credit == 2.5: level = 3
     elif credit >= 2: level = 2
     else: level = 1
     
@@ -187,21 +191,24 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             "بررسی مهارت های شنیداری شما پایان یافت\\. \n\n"
             f"سطح شما {level} می باشد\\. \n\n"
             "برای برچسب زدن قطعات /annotate را فشار دهید\\. \n\n"
-            "هربار، یک قطعه پنج ثانیه ای ارسال میشود و احتمال حضور سازهای مختلف در این قطعه پرسیده میشود\\. \n\n"
+            "هر بار، یک قطعه پنج ثانیه ای ارسال میشود و احتمال حضور سازهای مختلف در این قطعه پرسیده میشود\\. \n\n"
             "اگر صدای سازی را در قطعه نشنیدید، 0 را انتخاب کنید\\. \n"
-            "در صورتیکه صدای ساز را شنیدید، بین 1 و 2 بسته به قدرت صدا، انتخاب کنید\\. \n\n"
+            "در صورتیکه صدای ساز را شنیدید، بین 1، 2 و 3 بسته به پرنگی حضور صدای ساز، انتخاب کنید\\. \n\n"
             "در هنگامی که صدای خواننده در قطعه وجود داشته باشد، در مورد وجود یا عدم وجود تحریر نیز پرسیده میشود\\. \n\n"
-            ">تحریر یا چَهچَهه \\(چَه‌چَه\\) نوعی زینت آوازی است که به وسیله آن خواننده، صدایی آهنگین و *بدون کلام* را تولید می‌ کند\\. \n\n"
+            ">تحریر یا چَهچَهه \\(چَه‌چَه\\) نوعی زینت آوازی است که به وسیله آن خواننده، صدایی آهنگین و *بدون کلام* را تولید می‌ کند\\."
+            ">بنابراین با این تعریف، هر صوتی از خواننده که بدون کلام باشد *تحریر* است\\. \n\n"
             "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، *تحریر* را انتخاب کنید\\. در غیر این صورت، *آواز* را فشار دهید\\.",
             reply_markup=ReplyKeyboardRemove(),
             parse_mode='MarkdownV2',
             )
     else:
         await update.message.reply_text(
-            "بررسی مهارت های شنیداری شما پایان یافت. \n\n"
-            f"سطح شما {level} می باشد. \n\n"
-            "برای برچسب زدن قطعات /emotion را فشار دهید.",
+            "بررسی مهارت های شنیداری شما پایان یافت\\. \n\n"
+            f"سطح شما {level} می باشد\\. \n\n"
+            "برای برچسب زدن قطعات /rate را فشار دهید\\. \n\n"
+            "هر بار، یک قطعه بیست ثانیه اس ارسال میشود و سوالاتی مانند آشنایی شما با قطعه، علاقه شما به آن، کیفیت صوتی اش و احساساتی که به شما منتقل میکند، پرسیده می شود\\.",
             reply_markup=ReplyKeyboardRemove(),
+            parse_mode='MarkdownV2',
         )
 
 
@@ -233,7 +240,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     level = df.loc[df['chat_id'] == chat_id, 'level'].values[0]
 
     # Load samples dataframe
-    samples = pd.read_excel('./dataframe/samples.xlsx')
+    samples = pd.read_excel('./dataframe/annotation_samples.xlsx')
 
     # Filter on level
     filtered_samples = samples[samples['level'] <= level]
@@ -255,7 +262,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         else:
             await update.message.reply_text(
                 "متاسفانه هیچ قطعه ای در این سطح وجود ندارد. \n\n"
-                "لطفا، بعدا با فشردن /emotion دوباره امتحان کنید.",
+                "لطفا، بعدا با فشردن /rate دوباره امتحان کنید.",
                 reply_markup=ReplyKeyboardRemove()
             )
 
@@ -275,6 +282,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     context.user_data["annotations"] = basic_annotation
     instrument = context.user_data["instruments"].pop(0)
     context.user_data["last_instrument"] = instrument
+    context.user_data['level'] = level
 
     # Send this sample
     audio_file = open(f"./dataset/samples/{sample_id}.mp3", "rb")
@@ -295,7 +303,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             )
             return AVAZ
         '''
-        reply_keyboard = [["تحریر", "شعر", "وجود نداشت"]]
+        reply_keyboard = [["تحریر"], ["شعر"], ["هر دو"], ["وجود نداشت"]]
         await update.message.reply_text(
                 "صدای *خواننده* در قطعه چگونه بود؟",
                 reply_markup=ReplyKeyboardMarkup(
@@ -314,7 +322,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             
     else:
         # Ask the instrument annotation
-        reply_keyboard = [["0", "1", "2"]]
+        reply_keyboard = [["0", "1", "2","3"]]
         await update.message.reply_text(
             f"در قطعه ای که شنیدید صدای *{farsi_instruments[instrument]}* چقدر قوی بود؟",
             reply_markup=ReplyKeyboardMarkup(
@@ -366,10 +374,10 @@ async def instrument(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     if context.user_data["last_instrument"] == "singer": text = avaz_mapping[text] # Map if the text is from avaz
     context.user_data["annotations"][context.user_data["last_instrument"]] = text
 
-    # Ask the kamancheh annotation
-    reply_keyboard = [["0", "1", "2"]]
+    # Ask the kamancheh annotation 
+    reply_keyboard = [["0", "1", "2", "3"]]
     await update.message.reply_text(
-        f"در قطعه ای که شنیدید صدای *{farsi_instruments[instrument]}* چقدر قوی بود؟",
+        f"در قطعه ای که شنیدید حضور ساز *{farsi_instruments[instrument]}* (3=بیشترین / 0=عدم حضور)چقدر پرنگ بود؟",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{instrument}?"
         ),
@@ -397,10 +405,11 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     sample_id = context.user_data["sample_id"]
     chat_id = update.message.chat_id
     row = context.user_data["annotations"]
-    
+    level = context.user_data["level"] 
+
     # Convert every item to int
     row = {key: int(value) if key != 'singer' else value for key, value in row.items()}
-    row.update({"sample_id": sample_id, "chat_id": chat_id})
+    row.update({"sample_id": sample_id, "chat_id": chat_id, "level": level})
     
     df = pd.read_excel('./dataframe/annotation.xlsx')
     df_row = pd.DataFrame([row])
@@ -408,14 +417,14 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     output.to_excel('./dataframe/annotation.xlsx', index=False)
 
     # Iterate an annotation
-    samples = pd.read_excel('./dataframe/samples.xlsx')
+    samples = pd.read_excel('./dataframe/annotation_samples.xlsx')
     samples.loc[samples['sample_id'] == sample_id, 'num_annotation'] += 1
-    samples.to_excel('./dataframe/samples.xlsx', index=False)
+    samples.to_excel('./dataframe/annotation_samples.xlsx', index=False)
     
 
     df = pd.read_excel('./dataframe/user.xlsx')
-    samples.loc[samples['id'] == chat_id, 'num_annotation'] += 1
-    samples.to_excel('./dataframe/user.xlsx', index=False)
+    df.loc[df['chat_id'] == chat_id, 'num_annotation'] += 1
+    df.to_excel('./dataframe/user.xlsx', index=False)
 
     # Finish replay
     await update.message.reply_text(
@@ -438,6 +447,198 @@ async def cancel_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 
 
+
+
+async def rate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_id = update.message.chat_id
+
+    df = pd.read_excel('./dataframe/user.xlsx')
+
+    if chat_id not in df['chat_id'].values:
+        await update.message.reply_text(
+            "مهارت شنیداری شما بررسی نشده. برای ادامه /start را فشار دهید."
+        )
+        return True
+
+    level = df.loc[df['chat_id'] == chat_id, 'level'].values[0]
+
+    # Load samples dataframe
+    samples = pd.read_excel('./dataframe/emotion_samples.xlsx')
+
+    # Filter on level
+    filtered_samples = samples[samples['level'] <= level]
+
+    # Filter on num_annotation
+    filtered_samples = filtered_samples[filtered_samples['num_annotation'] == filtered_samples['num_annotation'].min()]
+
+    # Return if there are no samples
+    if filtered_samples.empty:
+        if level >= 2:
+            await update.message.reply_text(
+                "متاسفانه هیچ قطعه ای در این سطح وجود ندارد. \n\n"
+                "لطفا، بعدا با فشردن /annotate دوباره امتحان کنید.",
+                reply_markup=ReplyKeyboardRemove()
+            )
+
+            return ConversationHandler.END
+        
+        else:
+            await update.message.reply_text(
+                "متاسفانه هیچ قطعه ای در این سطح وجود ندارد. \n\n"
+                "لطفا، بعدا با فشردن /rate دوباره امتحان کنید.",
+                reply_markup=ReplyKeyboardRemove()
+            )
+
+            return ConversationHandler.END
+        
+    # Choose a random sample from the filtered samples
+    random_sample = filtered_samples.sample(n=1)
+    sample_id = random_sample['sample_id'].values[0]
+
+    # Send this sample
+    audio_file = open(f"./dataset/samples/{sample_id}.mp3", "rb")
+    await context.bot.send_audio(chat_id=chat_id, audio=audio_file)
+    audio_file.close()
+    
+    # Make a user context
+    context.user_data["rate"] = {"familiar": -1, "like": -1, "quality": -1, "emotion": -1}
+    context.user_data["sample_id"] = sample_id
+    context.user_data["level"] = level
+
+    # Ask for 'familiar' annotation
+    reply_keyboard = [["آشنا نیست"], ["تا حدودی آشناست"], ["بسیار آشناست"]]
+    await update.message.reply_text(
+            "این قطعه برای شما چقدر آشناست؟",
+            reply_markup=ReplyKeyboardMarkup(
+                reply_keyboard, one_time_keyboard=True, input_field_placeholder="آشنایی؟"
+            ),
+            parse_mode='Markdown',
+        )
+    
+    
+    return FAMILIAR
+
+
+async def familiar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    # Recieve familiar rate
+    text = update.message.text
+    mapped_text = familiar_mapping[text]
+
+    # Add to the context
+    context.user_data["rate"]["familiar"] = mapped_text
+
+    # Ask for 'like' annotation
+    reply_keyboard = [["1", "2", "3", "4", "5"]]
+    await update.message.reply_text(
+            "چقدر این قطعه را دوست دارید؟ (5=بیشترین)",
+            reply_markup=ReplyKeyboardMarkup(
+                reply_keyboard, one_time_keyboard=True, input_field_placeholder="علاقه؟"
+            ),
+            parse_mode='Markdown',
+        )
+    
+    return LIKE
+
+
+async def like(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    # Recieve familiar rate
+    text = update.message.text
+    mapped_text = int(text)
+
+    # Add to the context
+    context.user_data["rate"]["like"] = mapped_text
+
+    # Ask for 'quality' annotation
+    reply_keyboard = [["1", "2", "3", "4", "5"]]
+    await update.message.reply_text(
+            "به کیفیت این قطعه چه امتیازی می دهید؟ (5=بیشترین)",
+            reply_markup=ReplyKeyboardMarkup(
+                reply_keyboard, one_time_keyboard=True, input_field_placeholder="کیفیت؟"
+            ),
+            parse_mode='Markdown',
+        )
+    
+    return QUALITY
+
+
+async def quality(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    # Recieve familiar rate
+    text = update.message.text
+    mapped_text = int(text)
+
+    # Add to the context
+    context.user_data["rate"]["quality"] = mapped_text
+
+    # Ask for 'emotion' annotation
+    reply_keyboard = [["شادی، قدرت، شگفتی"], ["خشم، ترس، تنش"], ["غم، تلخی"], ["آرامش، لطافت، تعالی"]]
+    await update.message.reply_text(
+            "این قطعه چه دسته احساساتی در شما ایجاد می کند؟",
+            reply_markup=ReplyKeyboardMarkup(
+                reply_keyboard, one_time_keyboard=True, input_field_placeholder="احساسات؟"
+            ),
+            parse_mode='Markdown',
+        )
+    
+    return EMOTION
+
+
+async def emotion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    # Recieve familiar rate
+    text = update.message.text
+    mapped_text = emotion_mapping[text]
+
+    # Add to the context
+    context.user_data["rate"]["emotion"] = mapped_text
+
+    # Add to the dataframe
+    sample_id = context.user_data["sample_id"]
+    level = context.user_data["level"] 
+    chat_id = update.message.chat_id
+
+    row = context.user_data["rate"]
+    row.update({"sample_id": sample_id, "chat_id": chat_id, "level": level})
+    
+    df = pd.read_excel('./dataframe/emotion_annotation.xlsx')
+    df_row = pd.DataFrame([row])
+    output = pd.concat([df, df_row], ignore_index=True)
+    output.to_excel('./dataframe/emotion_annotation.xlsx', index=False)
+
+    # Iterate an annotation
+    samples = pd.read_excel('./dataframe/emotion_samples.xlsx')
+    samples.loc[samples['sample_id'] == sample_id, 'num_annotation'] += 1
+    samples.to_excel('./dataframe/emotion_samples.xlsx', index=False)
+    
+
+    df = pd.read_excel('./dataframe/user.xlsx')
+    df.loc[df['chat_id'] == chat_id, 'num_annotation'] += 1
+    df.to_excel('./dataframe/user.xlsx', index=False)
+
+    # Finish replay
+    await update.message.reply_text(
+        "برچسب زنی این قطعه پایان یافت. بسیار متشکریم! \n\n"
+        "برای برچسب زني يک قطعه ديگر /rate را فشار دهيد.",
+        reply_markup=ReplyKeyboardRemove(),
+    )
+        
+    return ConversationHandler.END
+
+
+
+
+
+
+
+async def cancel_rate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+
+    await update.message.reply_text(
+        "با فشردن /rate یک قطعه دیگر را برچسب زنی کنید.", reply_markup=ReplyKeyboardRemove()
+    )
+
+    return ConversationHandler.END
+
+
+
+
 # Main function
 def main()-> None:
 
@@ -447,9 +648,9 @@ def main()-> None:
             entry_points = [CommandHandler("start", start)],
             states={
                 ABILITY: [MessageHandler(filters.Regex("^(کم: آشنایی کمی با سازهای موسیقی دارم|متوسط: با تفاوت صوتی برخی از سازهای موسیقی آشنا هستم|زیاد: گوش موسیقی من آموزش دیده است)$"), gtruth1)],
-                GTRUTH1: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور)$"), gtruth2)],
-                GTRUTH2: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور)$"), gtruth3)],
-                GTRUTH3: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور)$"), credit)],
+                GTRUTH1: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک)$"), gtruth2)],
+                GTRUTH2: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک)$"), gtruth3)],
+                GTRUTH3: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک)$"), credit)],
             },
             fallbacks=[CommandHandler("cancel", cancel)],
         )
@@ -469,14 +670,26 @@ def main()-> None:
     annotation_handler = ConversationHandler(
             entry_points=[CommandHandler("annotate", annotate)],
             states={
-                INSTRUMENT: [MessageHandler(filters.Regex("^(0|1|2|وجود نداشت|شعر|تحریر)$"), instrument)],
-                END_ANNOT: [MessageHandler(filters.Regex("^(0|1|2|وجود نداشت|شعر|تحریر)$"), end_annotation)],
+                INSTRUMENT: [MessageHandler(filters.Regex("^(0|1|2|3|هر دو|وجود نداشت|شعر|تحریر)$"), instrument)],
+                END_ANNOT: [MessageHandler(filters.Regex("^(0|1|2|3|وجود نداشت|هر دو|شعر|تحریر)$"), end_annotation)],
             },
             fallbacks=[CommandHandler("cancel_annotation", cancel_annotation)],
         )
     
+    rate_handler = ConversationHandler(
+            entry_points=[CommandHandler("rate", rate)],
+            states={
+                FAMILIAR: [MessageHandler(filters.Regex("^(آشنا نیست|تا حدودی آشناست|بسیار آشناست)$"), familiar)],
+                LIKE: [MessageHandler(filters.Regex("^(1|2|3|4)$"), like)],
+                QUALITY: [MessageHandler(filters.Regex("^(1|2|3|4)$"), quality)],
+                EMOTION: [MessageHandler(filters.Regex("^(شادی، قدرت، شگفتی|خشم، ترس، تنش|غم، تلخی|آرامش، لطافت، تعالی])$"), emotion)],
+            },
+            fallbacks=[CommandHandler("cancel_rate", cancel_rate)],
+        )
+    
     app.add_handler(conv_handler)
     app.add_handler(annotation_handler)
+    app.add_handler(rate_handler)
 
     app.run_polling()
 

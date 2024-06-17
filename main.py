@@ -20,13 +20,13 @@ ABILITY, GTRUTH1, GTRUTH2, GTRUTH3 = range(4)
 INSTRUMENT, AVAZ, END_ANNOT = range(3)
 FAMILIAR, LIKE, QUALITY, EMOTION = range(4)
 
-all_instruments = ["singer", "tar", "ney", "setar", "santour", "kamancheh", "tonback"]
+all_instruments = ["singer", "tar", "ney", "setar", "santour", "kamancheh", "tonbak"]
 
 farsi_instruments = {"singer": "آواز", "tar": "تار", "ney": "نی", "setar": "سه تار", "santour": "سنتور", "kamancheh": "کمانچه", "tonbak":"تنبک"}
 ability_mapping = {
             "کم: آشنایی کمی با سازهای موسیقی دارم": 0,
-            "متوسط: با تفاوت صوتی برخی از سازهای موسیقی آشنا هستم": 0.5,
-            "زیاد: گوش موسیقی من آموزش دیده است": 1
+            "متوسط: با تفاوت صوتی برخی از سازهای موسیقی آشنا هستم": 1,
+            "زیاد: گوش موسیقی من آموزش دیده است": 2
     }
 avaz_mapping = {"هر دو":3, "تحریر": 2, "شعر": 1, "وجود نداشت": 0}
 familiar_mapping = {"آشنا نیست": 0, "تا حدودی آشناست": 1, "بسیار آشناست": 2}
@@ -77,7 +77,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     else:
         # Append the new answer
-        new_entry = pd.DataFrame([[chat_id, user.first_name, ability]], columns=['chat_id', 'name', 'answer'])
+        new_entry = pd.DataFrame([[chat_id, user.first_name, ability, 0, 0, 0, 0]], columns=['chat_id', 'name', 'answer', 'correct', 'credit', 'level', 'num_annotation'])
         df = pd.concat([df, new_entry], ignore_index=True)
         await update.message.reply_text('متشکرم!')
 
@@ -113,7 +113,7 @@ async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text = update.message.text
 
 
-    answer = text=="نی"
+    answer = 2*(text=="نی")
     df = pd.read_excel('./dataframe/user.xlsx')
     df.loc[df['chat_id'] == chat_id, 'correct'] = df.loc[df['chat_id'] == chat_id, 'correct'] + answer
     df.to_excel('./dataframe/user.xlsx', index=False)
@@ -134,12 +134,11 @@ async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     return GTRUTH2    
 
 async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.message.from_user
     chat_id = update.message.chat_id
     text = update.message.text
 
 
-    answer = text=="کمانچه"
+    answer = 2*(text=="کمانچه")
     df = pd.read_excel('./dataframe/user.xlsx')
     df.loc[df['chat_id'] == chat_id, 'correct'] = df.loc[df['chat_id'] == chat_id, 'correct'] + answer
     df.to_excel('./dataframe/user.xlsx', index=False)
@@ -161,20 +160,19 @@ async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.message.from_user
     chat_id = update.message.chat_id
     text = update.message.text
 
-    answer = text=="تار"
+    answer = 2*(text=="تار")
     df = pd.read_excel('./dataframe/user.xlsx')
     df.loc[df['chat_id'] == chat_id, 'correct'] += answer
 
     # Updating the credit
-    credit = (df[df['chat_id'] == chat_id]['correct'] + df[df['chat_id'] == chat_id]['answer']).values[0]
+    credit = df[df['chat_id'] == chat_id]['correct'].values[0] + df[df['chat_id'] == chat_id]['answer'].values[0]
     df.loc[df['chat_id'] == chat_id, 'credit'] = credit
 
-    if credit == 3.5: level = 3
-    elif credit > 1.5: level = 2
+    if credit == 8: level = 3
+    elif credit >= 4: level = 2
     else: level = 1
     
     df.loc[df['chat_id'] == chat_id, 'level'] = level
@@ -200,7 +198,7 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text(
             "بررسی مهارت های شنیداری شما پایان یافت\\. \n\n"
             f"سطح شما {level} می باشد\\. \n\n"
-            "برای برچسب زدن قطعات /rate را فشار دهید\\. \n\n"
+            "برای برچسب زدن قطعات /label را فشار دهید\\. \n\n"
             "هر بار، یک قطعه بیست ثانیه اس ارسال میشود و سوالاتی مانند آشنایی شما با قطعه، علاقه شما به آن، کیفیت صوتی اش و احساساتی که به شما منتقل میکند، پرسیده می شود\\.",
             reply_markup=ReplyKeyboardRemove(),
             parse_mode='MarkdownV2',
@@ -236,8 +234,11 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Load samples dataframe
     samples = pd.read_excel('./dataframe/annotation_samples.xlsx')
 
+    # Filter on apply
+    applied_samples = samples[samples['apply'] == 1]
+
     # Filter on level
-    filtered_samples = samples[samples['level'] <= level]
+    filtered_samples = applied_samples[applied_samples['level'] <= level]
 
     # Filter on num_annotation
     filtered_samples = filtered_samples[filtered_samples['num_annotation'] == filtered_samples['num_annotation'].min()]
@@ -256,7 +257,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         else:
             await update.message.reply_text(
                 "متاسفانه هیچ قطعه ای در این سطح وجود ندارد. \n\n"
-                "لطفا، بعدا با فشردن /rate دوباره امتحان کنید.",
+                "لطفا، بعدا با فشردن /label دوباره امتحان کنید.",
                 reply_markup=ReplyKeyboardRemove()
             )
 
@@ -267,7 +268,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     sample_id = random_sample['sample_id'].values[0]
 
     # Construct the list of instruments
-    sample_instruments = random_sample.drop(columns=["sample_id", "level", "num_annotation"])
+    sample_instruments = random_sample.drop(columns=["sample_id", "apply", "level", "num_annotation"])
     instruments = sample_instruments.columns[sample_instruments.eq(1).any()].tolist()
     
     # Make the context
@@ -318,7 +319,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         # Ask the instrument annotation
         reply_keyboard = [["0", "1", "2","3"]]
         await update.message.reply_text(
-            f"در قطعه ای که شنیدید صدای *{farsi_instruments[instrument]}* چقدر قوی بود؟(3=بیشترین / 0=عدم حضور)",
+            f"در قطعه ای که شنیدید صدای *{farsi_instruments[instrument]}* چقدر پر رنگ بود؟(3=بیشترین / 0=عدم حضور)",
             reply_markup=ReplyKeyboardMarkup(
                 reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{farsi_instruments[instrument]}؟"
             ),
@@ -371,7 +372,7 @@ async def instrument(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     # Ask the kamancheh annotation 
     reply_keyboard = [["0", "1", "2", "3"]]
     await update.message.reply_text(
-        f"در قطعه ای که شنیدید حضور ساز *{farsi_instruments[instrument]}* چقدر پرنگ بود؟(3=بیشترین / 0=عدم حضور)",
+        f"در قطعه ای که شنیدید حضور ساز *{farsi_instruments[instrument]}* چقدر پر رنگ بود؟(3=بیشترین / 0=عدم حضور)",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{farsi_instruments[instrument]}؟"
         ),
@@ -403,14 +404,14 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Convert every item to int
     row = {key: int(value) if key != 'singer' else value for key, value in row.items()}
-    row.update({"sample_id": sample_id, "chat_id": chat_id, "level": level})
+    row_new = {"sample_id": sample_id, "chat_id": chat_id, "level": level}
+    row_new.update(row)
     
     df = pd.read_excel('./dataframe/annotation.xlsx')
-    df_row = pd.DataFrame([row])
-    output = pd.concat([df, df_row], ignore_index=True)
-    output.to_excel('./dataframe/annotation.xlsx', index=False)
+    df.loc[len(df)] = row_new
+    df.to_excel('./dataframe/annotation.xlsx', index=False)
 
-    # Iterate an annotation
+    # Itelabel an annotation
     samples = pd.read_excel('./dataframe/annotation_samples.xlsx')
     samples.loc[samples['sample_id'] == sample_id, 'num_annotation'] += 1
     samples.to_excel('./dataframe/annotation_samples.xlsx', index=False)
@@ -443,7 +444,7 @@ async def cancel_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 
 
-async def rate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.message.chat_id
 
     df = pd.read_excel('./dataframe/user.xlsx')
@@ -459,8 +460,11 @@ async def rate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Load samples dataframe
     samples = pd.read_excel('./dataframe/emotion_samples.xlsx')
 
+    # Filter on apply
+    applied_samples = samples[samples['apply'] == 1]
+    
     # Filter on level
-    filtered_samples = samples[samples['level'] <= level]
+    filtered_samples = applied_samples[applied_samples['level'] <= level]
 
     # Filter on num_annotation
     filtered_samples = filtered_samples[filtered_samples['num_annotation'] == filtered_samples['num_annotation'].min()]
@@ -479,7 +483,7 @@ async def rate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         else:
             await update.message.reply_text(
                 "متاسفانه هیچ قطعه ای در این سطح وجود ندارد. \n\n"
-                "لطفا، بعدا با فشردن /rate دوباره امتحان کنید.",
+                "لطفا، بعدا با فشردن /label دوباره امتحان کنید.",
                 reply_markup=ReplyKeyboardRemove()
             )
 
@@ -491,11 +495,11 @@ async def rate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Send this sample
     audio_file = open(f"./dataset/emotion_samples/{sample_id}", "rb")
-    await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="#m"+sample_id.replace('_','.'))
+    await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="#m"+sample_id.replace('-','_'))
     audio_file.close()
     
     # Make a user context
-    context.user_data["rate"] = {"familiar": -1, "like": -1, "quality": -1, "emotion": -1}
+    context.user_data["label"] = {"familiar": -1, "like": -1, "quality": -1, "emotion": -1}
     context.user_data["sample_id"] = sample_id
     context.user_data["level"] = level
 
@@ -514,12 +518,12 @@ async def rate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def familiar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Recieve familiar rate
+    # Recieve familiar label
     text = update.message.text
     mapped_text = familiar_mapping[text]
 
     # Add to the context
-    context.user_data["rate"]["familiar"] = mapped_text
+    context.user_data["label"]["familiar"] = mapped_text
 
     # Ask for 'like' annotation
     reply_keyboard = [["1", "2", "3", "4", "5"]]
@@ -535,12 +539,12 @@ async def familiar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def like(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Recieve familiar rate
+    # Recieve familiar label
     text = update.message.text
     mapped_text = int(text)
 
     # Add to the context
-    context.user_data["rate"]["like"] = mapped_text
+    context.user_data["label"]["like"] = mapped_text
 
     # Ask for 'quality' annotation
     reply_keyboard = [["1", "2", "3", "4", "5"]]
@@ -556,12 +560,12 @@ async def like(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def quality(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Recieve familiar rate
+    # Recieve familiar label
     text = update.message.text
     mapped_text = int(text)
 
     # Add to the context
-    context.user_data["rate"]["quality"] = mapped_text
+    context.user_data["label"]["quality"] = mapped_text
 
     # Ask for 'emotion' annotation
     reply_keyboard = [["شادی، قدرت، شگفتی"], ["خشم، ترس، تنش"], ["غم، تلخی"], ["آرامش، لطافت، تعالی"]]
@@ -577,25 +581,26 @@ async def quality(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def emotion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Recieve familiar rate
+    # Recieve familiar label
     text = update.message.text
     mapped_text = emotion_mapping[text]
 
     # Add to the context
-    context.user_data["rate"]["emotion"] = mapped_text
+    context.user_data["label"]["emotion"] = mapped_text
 
     # Add to the dataframe
     sample_id = context.user_data["sample_id"]
     level = context.user_data["level"] 
     chat_id = update.message.chat_id
 
-    row = context.user_data["rate"]
-    row.update({"sample_id": sample_id, "chat_id": chat_id, "level": level})
-    
+    row = context.user_data["label"]
+    row_new = {"sample_id": sample_id, "chat_id": chat_id, "level": level}
+    row_new.update(row)
+
     df = pd.read_excel('./dataframe/emotion.xlsx')
-    df_row = pd.DataFrame([row])
-    output = pd.concat([df, df_row], ignore_index=True)
-    output.to_excel('./dataframe/emotion.xlsx', index=False)
+    df.loc[len(df)] = row_new
+    df.to_excel('./dataframe/emotion.xlsx', index=False)
+    
 
     # Iterate an annotation
     samples = pd.read_excel('./dataframe/emotion_samples.xlsx')
@@ -610,7 +615,7 @@ async def emotion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Finish replay
     await update.message.reply_text(
         "برچسب زنی این قطعه پایان یافت. بسیار متشکریم! \n\n"
-        "برای برچسب زنی يک قطعه ديگر /rate را فشار دهيد.",
+        "برای برچسب زنی يک قطعه ديگر /label را فشار دهيد.",
         reply_markup=ReplyKeyboardRemove(),
     )
         
@@ -622,10 +627,10 @@ async def emotion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 
-async def cancel_rate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def cancel_label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     await update.message.reply_text(
-        "با فشردن /rate یک قطعه دیگر را برچسب زنی کنید.", reply_markup=ReplyKeyboardRemove()
+        "با فشردن /label یک قطعه دیگر را برچسب زنی کنید.", reply_markup=ReplyKeyboardRemove()
     )
 
     return ConversationHandler.END
@@ -670,20 +675,20 @@ def main()-> None:
             fallbacks=[CommandHandler("cancel_annotation", cancel_annotation)],
         )
     
-    rate_handler = ConversationHandler(
-            entry_points=[CommandHandler("rate", rate)],
+    label_handler = ConversationHandler(
+            entry_points=[CommandHandler("label", label)],
             states={
                 FAMILIAR: [MessageHandler(filters.Regex("^(آشنا نیست|تا حدودی آشناست|بسیار آشناست)$"), familiar)],
                 LIKE: [MessageHandler(filters.Regex("^(1|2|3|4|5)$"), like)],
                 QUALITY: [MessageHandler(filters.Regex("^(1|2|3|4|5)$"), quality)],
                 EMOTION: [MessageHandler(filters.Regex("^(شادی، قدرت، شگفتی|خشم، ترس، تنش|غم، تلخی|آرامش، لطافت، تعالی)$"), emotion)],
             },
-            fallbacks=[CommandHandler("cancel_rate", cancel_rate)],
+            fallbacks=[CommandHandler("cancel_label", cancel_label)],
         )
     
     app.add_handler(conv_handler)
     app.add_handler(annotation_handler)
-    app.add_handler(rate_handler)
+    app.add_handler(label_handler)
 
     app.run_polling()
 

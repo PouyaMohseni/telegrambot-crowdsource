@@ -281,7 +281,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Send this sample
     audio_file = open(f"./dataset/annotation_samples/{sample_id}", "rb")
-    await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="#m"+sample_id.replace('-','_'))
+    await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="#m"+sample_id.replace('-','_').replace('.mp3',''))
     audio_file.close()
     
     
@@ -300,7 +300,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         '''
         reply_keyboard = [["تحریر"], ["شعر"], ["هر دو"], ["وجود نداشت"]]
         await update.message.reply_text(
-                "صدای *خواننده* در قطعه چگونه بود؟",
+                "صدای *خواننده* چگونه بود؟",
                 reply_markup=ReplyKeyboardMarkup(
                     reply_keyboard, one_time_keyboard=True, input_field_placeholder="خواننده؟"
                 ),
@@ -319,7 +319,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         # Ask the instrument annotation
         reply_keyboard = [["0", "1", "2","3"]]
         await update.message.reply_text(
-            f"در قطعه ای که شنیدید صدای *{farsi_instruments[instrument]}* چقدر پر رنگ بود؟(3=بیشترین / 0=عدم حضور)",
+            f"صدای *{farsi_instruments[instrument]}* چقدر پر رنگ بود؟(3=بیشترین / 0=عدم حضور)",
             reply_markup=ReplyKeyboardMarkup(
                 reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{farsi_instruments[instrument]}؟"
             ),
@@ -372,7 +372,7 @@ async def instrument(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     # Ask the kamancheh annotation 
     reply_keyboard = [["0", "1", "2", "3"]]
     await update.message.reply_text(
-        f"در قطعه ای که شنیدید حضور ساز *{farsi_instruments[instrument]}* چقدر پر رنگ بود؟(3=بیشترین / 0=عدم حضور)",
+        f"حضور ساز *{farsi_instruments[instrument]}* چقدر پر رنگ بود؟(3=بیشترین / 0=عدم حضور)",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{farsi_instruments[instrument]}؟"
         ),
@@ -495,7 +495,7 @@ async def label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Send this sample
     audio_file = open(f"./dataset/emotion_samples/{sample_id}", "rb")
-    await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="#m"+sample_id.replace('-','_'))
+    await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="#m"+sample_id.replace('-','_').replace('mp3',''))
     audio_file.close()
     
     # Make a user context

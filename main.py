@@ -1,8 +1,8 @@
-from telegram.ext import CommandHandler, MessageHandler, filters, ConversationHandler
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram import Update
+from telegram.ext import CommandHandler, MessageHandler, ConversationHandler, filters
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, ForceReply, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import logging
+import random
 import pandas as pd
 
 
@@ -18,20 +18,23 @@ logger = logging.getLogger(__name__)
 
 ABILITY, GTRUTH1, GTRUTH2, GTRUTH3 = range(4)
 INSTRUMENT, AVAZ, END_ANNOT = range(3)
-FAMILIAR, LIKE, QUALITY, EMOTION, END_LABEL = range(5)
+FAMILIAR, LIKE, QUALITY, Q_REASON, EMOTION, END_LABEL = range(6)
 
 all_instruments = ["singer", "tar", "ney", "setar", "santour", "kamancheh", "tonbak"]
 
 farsi_instruments = {"singer": "آواز", "tar": "تار", "ney": "نی", "setar": "سه تار", "santour": "سنتور", "kamancheh": "کمانچه", "tonbak":"تنبک"}
-ability_mapping = {
-            "کم: آشنایی کمی با سازهای موسیقی دارم": 0,
+ability_mapping = {"کم: آشنایی کمی با سازهای موسیقی دارم": 0,
             "متوسط: با تفاوت صوتی برخی از سازهای موسیقی آشنا هستم": 1,
-            "زیاد: گوش موسیقی من آموزش دیده است": 2
+            "زیاد: گوش موسیقی من آموزش‌دیده است": 2
     }
 avaz_mapping = {"هر دو":3, "تحریر": 2, "شعر": 1, "وجود نداشت": 0}
 familiar_mapping = {"آشنا نیست": 0, "تا حدودی آشناست": 1, "بسیار آشناست": 2}
 
 basic_annotation = {instrument: -1 for instrument in all_instruments}
+
+quality_examples = ["نویزی بود", "شفاف بود", "صدا، واضح بود", "خش داشت", "صدا ناواضح بود", "صدای محیط زیاد بود", "صدا، قوی بود",
+                     "نرم و شفاف بود", "بلند بود", "خشن بود", "دیستوردد بود", "کدر بود", "نازک بود", "صدا، کم بود", "وضوح، کم بود",
+                     "قدرت", "نویز", "وضوح", "خشن", "دیستورد", "کدر", "شفاف", "نرم", "نازک", "واضح", "بلند"]
 
 # Start the bot
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -40,7 +43,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     reply_keyboard = [ #راز به راست
             ["کم: آشنایی کمی با سازهای موسیقی دارم"],
             ["متوسط: با تفاوت صوتی برخی از سازهای موسیقی آشنا هستم"],
-            ["زیاد: گوش موسیقی من آموزش دیده است"]
+            ["زیاد: گوش موسیقی من آموزش‌دیده است"]
         ]
 
 
@@ -85,7 +88,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             
 
     await update.message.reply_text(       
-        "حال، برای بررسی مهارت های شنیداری شما، سه قطعه موسیقی پخش میشود. برای هر قطعه، از بین پنج ساز آورده شده در منوی پایین، سازی را که میشنوید، انتخاب نمایید.",
+        "حال، برای بررسی مهارت‌های شنیداری شما، سه قطعه موسیقی پخش می‌شود. برای هر قطعه، از بین پنج ساز آورده‌شده در منوی پایین، سازی را که می‌شنوید، انتخاب نمایید.",
 
         reply_markup=ReplyKeyboardRemove(),
     )
@@ -188,20 +191,20 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if level>=2:
  
         await update.message.reply_text(
-            "هر بار، یک قطعه پنج ثانیه ای ارسال میشود و احتمال حضور سازهای مختلف در این قطعه پرسیده میشود\\. \n\n"
+            "هر بار، یک قطعه پنج ثانیه‌ای ارسال می‌شود و احتمال حضور سازهای مختلف در این قطعه، پرسیده می‌شود\\. \n\n"
             "اگر صدای سازی را در قطعه نشنیدید، 0 را انتخاب کنید\\. \n"
-            "در صورتیکه صدای ساز را شنیدید، بین 1، 2 و 3 بسته به پرنگی حضور صدای ساز، انتخاب کنید\\. \n\n"
-            "در هنگامی که صدای خواننده در قطعه وجود داشته باشد، در مورد وجود یا عدم وجود تحریر نیز پرسیده میشود\\. \n\n"
+            "در صورتیکه صدای ساز را شنیدید، بین 1، 2 و 3 بسته به پررنگی حضور صدای ساز، انتخاب کنید\\. \n\n"
+            "در هنگامی که صدای خواننده در قطعه وجود داشته باشد، در مورد وجود یا عدم وجود تحریر نیز پرسیده می‌شود\\. \n\n"
             ">تحریر یا چَهچَهه \\(چَه‌چَه\\) نوعی زینت آوازی است که به وسیله آن خواننده، صدایی آهنگین و *بدون کلام* را تولید می‌ کند\\.\n"
-            ">بنابراین با این تعریف، هر صوتی از خواننده که بدون کلام باشد *تحریر* است\\. \n\n"
-            "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، *تحریر* را انتخاب کنید\\. در غیر این صورت، *آواز* را فشار دهید\\. \n\n"
+            ">بنابر این تعریف، هر صوتی از خواننده که بدون کلام باشد *تحریر* است\\. \n\n"
+            "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، *تحریر* را انتخاب کرده\\. در غیر این صورت، *آواز* را انتخاب کنید\\. \n\n"
             "برای برچسب زدن قطعات /annotate را فشار دهید\\.",
             reply_markup=ReplyKeyboardRemove(),
             parse_mode='MarkdownV2',
             )
     else:
         await update.message.reply_text(
-            "هر بار، یک قطعه بیست ثانیه ای ارسال میشود و سوالاتی مانند آشنایی شما با قطعه، علاقه شما به آن، کیفیت صوتی اش و احساسات موجود در آن، پرسیده می شود\\. \n\n"
+            "هر بار، یک قطعه بیست ثانیه‌ای ارسال می‌شود و سوالاتی مانند آشنایی شما با قطعه، علاقه شما به آن، کیفیت صوتی‌اش و احساسات برانگیخته‌شده توسط قطعه، پرسیده می‌شود\\. \n\n"
             "برای برچسب زدن قطعات /label را فشار دهید\\.",
             reply_markup=ReplyKeyboardRemove(),
             parse_mode='MarkdownV2',
@@ -322,7 +325,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         # Ask the instrument annotation
         reply_keyboard = [["0", "1", "2","3"]]
         await update.message.reply_text(
-            f"صدای *{farsi_instruments[instrument]}* چقدر پر رنگ بود؟\n (3=بیشترین / 0=عدم حضور)",
+            f"صدای *{farsi_instruments[instrument]}* چقدر پررنگ بود؟\n (3=بیشترین / 0=عدم حضور)",
             reply_markup=ReplyKeyboardMarkup(
                 reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{farsi_instruments[instrument]}؟"
             ),
@@ -375,7 +378,7 @@ async def instrument(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     # Ask the kamancheh annotation 
     reply_keyboard = [["0", "1", "2", "3"]]
     await update.message.reply_text(
-        f"حضور ساز *{farsi_instruments[instrument]}* چقدر پر رنگ بود؟\n (3=بیشترین / 0=عدم حضور)",
+        f"حضور ساز *{farsi_instruments[instrument]}* چقدر پررنگ بود؟\n (3=بیشترین / 0=عدم حضور)",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{farsi_instruments[instrument]}؟"
         ),
@@ -426,8 +429,8 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Finish replay
     await update.message.reply_text(
-        "برچسب زنی این قطعه پایان یافت. بسیار متشکریم! \n\n"
-        "برای برچسب زنی يک قطعه ديگر /annotate را فشار دهيد.",
+        "برچسب‌زنی این قطعه پایان یافت. بسیار متشکریم! \n\n"
+        "برای برچسب‌زنی يک قطعه ديگر /annotate را فشار دهيد.",
         reply_markup=ReplyKeyboardRemove(),
     )
         
@@ -438,7 +441,7 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def cancel_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     await update.message.reply_text(
-        "با فشردن /annotate یک قطعه دیگر را برچسب زنی کنید.", reply_markup=ReplyKeyboardRemove()
+        "با فشردن /annotate یک قطعه دیگر را برچسب‌زنی کنید.", reply_markup=ReplyKeyboardRemove()
     )
 
     return ConversationHandler.END
@@ -572,6 +575,27 @@ async def quality(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Add to the context
     context.user_data["label"]["quality"] = mapped_text
 
+    # Ask for 'q_reason' annotation
+    markup=ForceReply(selective=False)
+    await update.message.reply_text(
+            f"دلیل انتخاب {text} از نظرتان را در یک جمله، عبارت یا کلمه بنویسید. (تایپ کنید)",
+            reply_markup=ReplyKeyboardMarkup(
+                markup, placeholder=f"مثال: {random.sample(quality_examples,1)}"
+            ),
+            parse_mode='Markdown',
+        )
+    
+    return EMOTION
+
+
+async def q_reason(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    # Recieve familiar label
+    text = update.message.text
+    mapped_text = text
+
+    # Add to the context
+    context.user_data["label"]["q_reason"] = mapped_text
+
     # Ask for 'emotion' annotation
     emotion_text_out = context.user_data["emotion_text"].pop(0)
     reply_keyboard = [["0%", "20%", "40%", "60%", "80%", "100%"]]
@@ -610,12 +634,6 @@ async def emotion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     return END_LABEL
     
-
-
-
-
-
-
 
 async def end_label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Recieve Q label
@@ -680,7 +698,7 @@ def main()-> None:
     conv_handler = ConversationHandler(
             entry_points = [CommandHandler("start", start)],
             states={
-                ABILITY: [MessageHandler(filters.Regex("^(کم: آشنایی کمی با سازهای موسیقی دارم|متوسط: با تفاوت صوتی برخی از سازهای موسیقی آشنا هستم|زیاد: گوش موسیقی من آموزش دیده است)$"), gtruth1)],
+                ABILITY: [MessageHandler(filters.Regex("^(کم: آشنایی کمی با سازهای موسیقی دارم|متوسط: با تفاوت صوتی برخی از سازهای موسیقی آشنا هستم|زیاد: گوش موسیقی من آموزش‌دیده است)$"), gtruth1)],
                 GTRUTH1: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک)$"), gtruth2)],
                 GTRUTH2: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک)$"), gtruth3)],
                 GTRUTH3: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک)$"), credit)],
@@ -715,6 +733,7 @@ def main()-> None:
                 FAMILIAR: [MessageHandler(filters.Regex("^(آشنا نیست|تا حدودی آشناست|بسیار آشناست)$"), familiar)],
                 LIKE: [MessageHandler(filters.Regex("^(1|2|3|4|5)$"), like)],
                 QUALITY: [MessageHandler(filters.Regex("^(1|2|3|4|5)$"), quality)],
+                Q_REASON: [MessageHandler(filters.ALL, q_reason)],
                 EMOTION: [MessageHandler(filters.Regex("^(0%|20%|40%|60%|80%|100%)$"), emotion)],
                 END_LABEL: [MessageHandler(filters.Regex("^(0%|20%|40%|60%|80%|100%)$"), end_label)],
             },

@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 ABILITY, GTRUTH1, GTRUTH2, GTRUTH3 = range(4)
 INSTRUMENT, AVAZ, END_ANNOT = range(3)
-FAMILIAR, LIKE, QUALITY, EMOTION = range(4)
+FAMILIAR, LIKE, QUALITY, EMOTION, END_LABEL = range(5)
 
 all_instruments = ["singer", "tar", "ney", "setar", "santour", "kamancheh", "tonbak"]
 
@@ -30,7 +30,6 @@ ability_mapping = {
     }
 avaz_mapping = {"هر دو":3, "تحریر": 2, "شعر": 1, "وجود نداشت": 0}
 familiar_mapping = {"آشنا نیست": 0, "تا حدودی آشناست": 1, "بسیار آشناست": 2}
-emotion_mapping = {"شادی، قدرت، شگفتی": "Q1", "خشم، ترس، تنش": "Q2", "غم، تلخی": "Q3", "آرامش، لطافت، تعالی": "Q4"}
 
 basic_annotation = {instrument: -1 for instrument in all_instruments}
 
@@ -179,27 +178,31 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     df.to_excel('./dataframe/user.xlsx', index=False)
 
-    if level>=2:     
-        await update.message.reply_text(
+    await update.message.reply_text(
             "بررسی مهارت های شنیداری شما پایان یافت\\. \n\n"
-            f"سطح شما {level} می باشد\\. \n\n"
-            "برای برچسب زدن قطعات /annotate را فشار دهید\\. \n\n"
+            f"سطح شما {level} می باشد\\.",
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode='MarkdownV2',
+            )
+    
+    if level>=2:
+ 
+        await update.message.reply_text(
             "هر بار، یک قطعه پنج ثانیه ای ارسال میشود و احتمال حضور سازهای مختلف در این قطعه پرسیده میشود\\. \n\n"
             "اگر صدای سازی را در قطعه نشنیدید، 0 را انتخاب کنید\\. \n"
             "در صورتیکه صدای ساز را شنیدید، بین 1، 2 و 3 بسته به پرنگی حضور صدای ساز، انتخاب کنید\\. \n\n"
             "در هنگامی که صدای خواننده در قطعه وجود داشته باشد، در مورد وجود یا عدم وجود تحریر نیز پرسیده میشود\\. \n\n"
             ">تحریر یا چَهچَهه \\(چَه‌چَه\\) نوعی زینت آوازی است که به وسیله آن خواننده، صدایی آهنگین و *بدون کلام* را تولید می‌ کند\\.\n"
             ">بنابراین با این تعریف، هر صوتی از خواننده که بدون کلام باشد *تحریر* است\\. \n\n"
-            "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، *تحریر* را انتخاب کنید\\. در غیر این صورت، *آواز* را فشار دهید\\.",
+            "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، *تحریر* را انتخاب کنید\\. در غیر این صورت، *آواز* را فشار دهید\\. \n\n"
+            "برای برچسب زدن قطعات /annotate را فشار دهید\\.",
             reply_markup=ReplyKeyboardRemove(),
             parse_mode='MarkdownV2',
             )
     else:
         await update.message.reply_text(
-            "بررسی مهارت های شنیداری شما پایان یافت\\. \n\n"
-            f"سطح شما {level} می باشد\\. \n\n"
-            "برای برچسب زدن قطعات /label را فشار دهید\\. \n\n"
-            "هر بار، یک قطعه بیست ثانیه اس ارسال میشود و سوالاتی مانند آشنایی شما با قطعه، علاقه شما به آن، کیفیت صوتی اش و احساساتی که به شما منتقل میکند، پرسیده می شود\\.",
+            "هر بار، یک قطعه بیست ثانیه ای ارسال میشود و سوالاتی مانند آشنایی شما با قطعه، علاقه شما به آن، کیفیت صوتی اش و احساسات موجود در آن، پرسیده می شود\\. \n\n"
+            "برای برچسب زدن قطعات /label را فشار دهید\\.",
             reply_markup=ReplyKeyboardRemove(),
             parse_mode='MarkdownV2',
         )
@@ -319,7 +322,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         # Ask the instrument annotation
         reply_keyboard = [["0", "1", "2","3"]]
         await update.message.reply_text(
-            f"صدای *{farsi_instruments[instrument]}* چقدر پر رنگ بود؟(3=بیشترین / 0=عدم حضور)",
+            f"صدای *{farsi_instruments[instrument]}* چقدر پر رنگ بود؟\n (3=بیشترین / 0=عدم حضور)",
             reply_markup=ReplyKeyboardMarkup(
                 reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{farsi_instruments[instrument]}؟"
             ),
@@ -372,7 +375,7 @@ async def instrument(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     # Ask the kamancheh annotation 
     reply_keyboard = [["0", "1", "2", "3"]]
     await update.message.reply_text(
-        f"حضور ساز *{farsi_instruments[instrument]}* چقدر پر رنگ بود؟(3=بیشترین / 0=عدم حضور)",
+        f"حضور ساز *{farsi_instruments[instrument]}* چقدر پر رنگ بود؟\n (3=بیشترین / 0=عدم حضور)",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{farsi_instruments[instrument]}؟"
         ),
@@ -499,7 +502,9 @@ async def label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     audio_file.close()
     
     # Make a user context
-    context.user_data["label"] = {"familiar": -1, "like": -1, "quality": -1, "emotion": -1}
+    context.user_data["label"] = {"familiar": -1, "like": -1, "quality": -1, "Q1": -1, "Q2": -1, "Q3": -1, "Q4": -1}
+    context.user_data["Q"] = ["Q1", "Q2", "Q3", "Q4"]
+    context.user_data["emotion_text"] = ["شادی، قدرت یا شگفتی", "تنش، خشم یا ترس", "غم یا تلخی", "آرامش، لطافت یا تعالی"]
     context.user_data["sample_id"] = sample_id
     context.user_data["level"] = level
 
@@ -568,11 +573,12 @@ async def quality(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     context.user_data["label"]["quality"] = mapped_text
 
     # Ask for 'emotion' annotation
-    reply_keyboard = [["شادی، قدرت، شگفتی"], ["خشم، ترس، تنش"], ["غم، تلخی"], ["آرامش، لطافت، تعالی"]]
+    emotion_text_out = context.user_data["emotion_text"].pop(0)
+    reply_keyboard = [["0%", "20%", "40%", "60%", "80%", "100%"]]
     await update.message.reply_text(
-            "این قطعه چه دسته احساساتی در شما ایجاد می کند؟",
+            f"شدت احساسات {emotion_text_out} در این قطعه چقدر بود؟\n (100%=بیشترین / 0%=عدم برانگیختگی این احساس)",
             reply_markup=ReplyKeyboardMarkup(
-                reply_keyboard, one_time_keyboard=True, input_field_placeholder="احساسات؟"
+                reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{emotion_text_out}؟"
             ),
             parse_mode='Markdown',
         )
@@ -581,12 +587,44 @@ async def quality(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def emotion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Recieve familiar label
+    # Recieve Q label
     text = update.message.text
-    mapped_text = emotion_mapping[text]
+    mapped_text = int(text[:-1])/100
 
     # Add to the context
-    context.user_data["label"]["emotion"] = mapped_text
+    context.user_data["label"][context.user_data["Q"].pop(0)] = mapped_text
+    
+    # Ask for 'emotion' annotation
+    emotion_text_out = context.user_data["emotion_text"].pop(0)
+    reply_keyboard = [["0%", "20%", "40%", "60%", "80%", "100%"]]
+    await update.message.reply_text(
+            f"شدت احساسات *{emotion_text_out}* در این قطعه چقدر بود؟\n (100%=بیشترین / 0%=عدم برانگیختگی این احساس)",
+            reply_markup=ReplyKeyboardMarkup(
+                reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{emotion_text_out}؟"
+            ),
+            parse_mode='Markdown',
+        )
+
+    if len(context.user_data["emotion_text"]) > 0:
+        return EMOTION
+    
+    return END_LABEL
+    
+
+
+
+
+
+
+
+async def end_label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    # Recieve Q label
+    text = update.message.text
+    mapped_text = int(text[:-1])/100
+
+
+    # Add to the context
+    context.user_data["label"][context.user_data["Q"].pop(0)] = mapped_text
 
     # Add to the dataframe
     sample_id = context.user_data["sample_id"]
@@ -597,11 +635,12 @@ async def emotion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     row_new = {"sample_id": sample_id, "chat_id": chat_id, "level": level}
     row_new.update(row)
 
+
     df = pd.read_excel('./dataframe/emotion.xlsx')
     df.loc[len(df)] = row_new
     df.to_excel('./dataframe/emotion.xlsx', index=False)
     
-
+    
     # Iterate an annotation
     samples = pd.read_excel('./dataframe/emotion_samples.xlsx')
     samples.loc[samples['sample_id'] == sample_id, 'num_annotation'] += 1
@@ -620,11 +659,6 @@ async def emotion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
         
     return ConversationHandler.END
-
-
-
-
-
 
 
 async def cancel_label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -681,7 +715,8 @@ def main()-> None:
                 FAMILIAR: [MessageHandler(filters.Regex("^(آشنا نیست|تا حدودی آشناست|بسیار آشناست)$"), familiar)],
                 LIKE: [MessageHandler(filters.Regex("^(1|2|3|4|5)$"), like)],
                 QUALITY: [MessageHandler(filters.Regex("^(1|2|3|4|5)$"), quality)],
-                EMOTION: [MessageHandler(filters.Regex("^(شادی، قدرت، شگفتی|خشم، ترس، تنش|غم، تلخی|آرامش، لطافت، تعالی)$"), emotion)],
+                EMOTION: [MessageHandler(filters.Regex("^(0%|20%|40%|60%|80%|100%)$"), emotion)],
+                END_LABEL: [MessageHandler(filters.Regex("^(0%|20%|40%|60%|80%|100%)$"), end_label)],
             },
             fallbacks=[CommandHandler("cancel_label", cancel_label)],
         )

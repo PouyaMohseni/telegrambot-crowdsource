@@ -32,9 +32,20 @@ familiar_mapping = {"آشنا نیست": 0, "تا حدودی آشناست": 1, "
 
 basic_annotation = {instrument: -1 for instrument in all_instruments}
 
-quality_examples = ["نویزی بود", "شفاف بود", "صدا، واضح بود", "خش داشت", "صدا ناواضح بود", "صدای محیط زیاد بود", "صدا، قوی بود",
-                     "نرم و شفاف بود", "بلند بود", "خشن بود", "دیستوردد بود", "کدر بود", "نازک بود", "صدا، کم بود", "وضوح، کم بود",
-                     "قدرت", "نویز", "وضوح", "خشن", "دیستورد", "کدر", "شفاف", "نرم", "نازک", "واضح", "بلند"]
+quality_examples_p = ["شفاف بود", "صدا واضح بود", "صدا قوی بود", "صدا پر بود"
+                     "نرم و شفاف بود", "بلند بود", "قدرت",
+                    "وضوح", "شفاف", "نرمی", "واضح", "بلندبودن"]
+quality_examples_n = ["نویزی بود", "خش داشت", "صدا ناواضح بود", "صدای محیط زیاد بود", "خشن بود", "دیستوردد بود", "کدر بود",
+                      "صدا کم بود", "وضوح کم بود", "خشن", "دیستورد", "کدر", "نویز"]
+quality_examples_m = ["نازک بود", "نازک", "صدا ترد بود"]
+
+quality_example_mapping = {
+    1: quality_examples_n,
+    2: quality_examples_m + quality_examples_n,
+    3: quality_examples_p + quality_examples_m + quality_examples_n,
+    4: quality_examples_p + quality_examples_m,
+    5: quality_examples_p,
+}
 
 # Start the bot
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -46,9 +57,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             ["زیاد: گوش موسیقی من آموزش‌دیده است"]
         ]
 
+    await update.message.reply_text(
+        "متشکریم! همکاری شما کمک بزرگی در راستای تحقق اهداف ذکر شده است. \n"
+        "برای اطلاعات بیشتر، کانال @PemLab را دنبال کنید.\n\n"
+        "برای توقف دکمه /cancel را فشار دهید."
+    )
 
     await update.message.reply_text(
-        "برای توقف دکمه /cancel را فشار دهید. \n\n"
         "در ابتدا مهارت شنیداری موسیقی (Ear-training) شما بررسی میشود. \n\n"
         "گوش موسیقی شما چقدر قوی است؟",
         reply_markup=ReplyKeyboardMarkup(
@@ -257,8 +272,6 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 "لطفا، بعدا با فشردن /annotate دوباره امتحان کنید.",
                 reply_markup=ReplyKeyboardRemove()
             )
-
-            return ConversationHandler.END
         
         else:
             await update.message.reply_text(
@@ -267,7 +280,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 reply_markup=ReplyKeyboardRemove()
             )
 
-            return ConversationHandler.END
+        return ConversationHandler.END
         
     # Choose a random sample from the filtered samples
     random_sample = filtered_samples.sample(n=1)
@@ -429,9 +442,14 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Finish replay
     await update.message.reply_text(
-        "برچسب‌زنی این قطعه پایان یافت. بسیار متشکریم! \n\n"
+        "برچسب زنی این قطعه پایان یافت. بسیار متشکریم! \n"
+        "اگر در برچسب زنی این قطعه اشتباه کردید،\n" 
+        f"`#m{sample_id.replace('-','_').replace('.mp3','')}`"
+        "(کلیک برای کپی)\n"
+        "را ارسال کنید.\n\n"
         "برای برچسب‌زنی يک قطعه ديگر /annotate را فشار دهيد.",
         reply_markup=ReplyKeyboardRemove(),
+        parse_mode='Markdown',
     )
         
     return ConversationHandler.END
@@ -501,11 +519,11 @@ async def label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Send this sample
     audio_file = open(f"./dataset/emotion_samples/{sample_id}", "rb")
-    await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="#m"+sample_id.replace('-','_').replace('mp3',''))
+    await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="#e"+sample_id.replace('-','_').replace('.mp3',''))
     audio_file.close()
     
     # Make a user context
-    context.user_data["label"] = {"familiar": -1, "like": -1, "quality": -1, "Q1": -1, "Q2": -1, "Q3": -1, "Q4": -1}
+    context.user_data["label"] = {"familiar": -1, "like": -1, "quality": -1, "q_reason": -1, "Q1": -1, "Q2": -1, "Q3": -1, "Q4": -1}
     context.user_data["Q"] = ["Q1", "Q2", "Q3", "Q4"]
     context.user_data["emotion_text"] = ["شادی، قدرت یا شگفتی", "تنش، خشم یا ترس", "غم یا تلخی", "آرامش، لطافت یا تعالی"]
     context.user_data["sample_id"] = sample_id
@@ -575,17 +593,19 @@ async def quality(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Add to the context
     context.user_data["label"]["quality"] = mapped_text
 
+    # Make quality space and random reply 
+    random_reply = random.sample(quality_example_mapping[mapped_text], 3)
+    
     # Ask for 'q_reason' annotation
-    markup=ForceReply(selective=False)
     await update.message.reply_text(
-            f"دلیل انتخاب {text} از نظرتان را در یک جمله، عبارت یا کلمه بنویسید. (تایپ کنید)",
-            reply_markup=ReplyKeyboardMarkup(
-                markup, placeholder=f"مثال: {random.sample(quality_examples,1)}"
+            f"در یک کلمه، جمله یا عبارت، دلیلتان را برای انتخاب {text} از 5 بنویسید. (تایپ کنید) ",
+            reply_markup=ForceReply(
+                input_field_placeholder=f"مثال: {random_reply[0]}، {random_reply[1]}، {random_reply[2]} یا ..."[:64]
             ),
             parse_mode='Markdown',
         )
     
-    return EMOTION
+    return Q_REASON
 
 
 async def q_reason(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -671,9 +691,14 @@ async def end_label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Finish replay
     await update.message.reply_text(
-        "برچسب زنی این قطعه پایان یافت. بسیار متشکریم! \n\n"
+        "برچسب زنی این قطعه پایان یافت. بسیار متشکریم! \n"
+        "اگر در برچسب زنی این قطعه اشتباه کردید،\n" 
+        f"`#e{sample_id.replace('-','_').replace('.mp3','')}`"
+        "(کلیک برای کپی)\n"
+        "را ارسال کنید.\n\n"
         "برای برچسب زنی يک قطعه ديگر /label را فشار دهيد.",
         reply_markup=ReplyKeyboardRemove(),
+        parse_mode='Markdown',
     )
         
     return ConversationHandler.END
@@ -688,7 +713,69 @@ async def cancel_label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     return ConversationHandler.END
 
 
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    message_text = update.message.text
+    chat_id = update.message.chat_id
 
+    # Process hashtag messages
+    if '#' in message_text[0]:
+        sample_id = message_text[2:].replace('_', '-')+".mp3"
+        if message_text[1]=="m": dataframe_path, samples_path = './dataframe/annotation.xlsx', './dataframe/annotation_samples.xlsx' 
+        else: dataframe_path, samples_path = './dataframe/emotion.xlsx', './dataframe/emotion_samples.xlsx'
+        
+        # Read the dataframe
+        df = pd.read_excel(dataframe_path)
+  
+        # Find the first row with the matching sample_id and chat_id
+        row_to_delete = df[(df['sample_id'] == sample_id) & (df['chat_id'] == chat_id)].index
+
+        if not row_to_delete.empty:
+            # Drop the first matching row from the DataFrame
+            df.drop(row_to_delete[0], inplace=True)
+
+            # Save the updated DataFrame back to the Excel file
+            df.to_excel(dataframe_path, index=False)
+
+            # Re-iterate an annotation
+            samples = pd.read_excel(samples_path)
+            samples.loc[samples['sample_id'] == sample_id, 'num_annotation'] -= 1
+            samples.to_excel(samples_path, index=False)
+            
+            await update.message.reply_text(
+                "برچسب این قطعه حذف شد.",
+                reply_markup=ReplyKeyboardRemove(),
+            )
+            
+        else:
+            await update.message.reply_text(
+                    "برچسبی از طرف شما برای این قطعه وجود ندارد.",
+                    reply_markup=ReplyKeyboardRemove(),
+                )
+            
+    # Preserved output
+    df = pd.read_excel('./dataframe/user.xlsx')
+
+    if chat_id not in df['chat_id'].values:
+        await update.message.reply_text(
+            "مهارت شنیداری شما بررسی نشده. برای ادامه /start را فشار دهید."
+        )
+        return True
+
+    level = df.loc[df['chat_id'] == chat_id, 'level'].values[0]
+
+    if level >= 2:
+        await update.message.reply_text(
+            "با فشردن /annotate یک قطعه دیگر را برچسب‌زنی کنید.",
+            reply_markup=ReplyKeyboardRemove()
+        )
+            
+    else:
+        await update.message.reply_text(
+            "با فشردن /label یک قطعه دیگر را برچسب‌زنی کنید.",
+            reply_markup=ReplyKeyboardRemove()
+        )
+
+    return True
 
 # Main function
 def main()-> None:
@@ -705,17 +792,6 @@ def main()-> None:
             },
             fallbacks=[CommandHandler("cancel", cancel)],
         )
-    '''
-    annotation_handler = ConversationHandler(
-            entry_points = [CommandHandler("annotate", annotate)],
-            states={
-                AVAZ: [MessageHandler(filters.Regex("^(بله|خیر)$"), avaz)],
-                INSTRUMENT: [MessageHandler(filters.Regex("^(0|1|2|تحریر|شعر|غیرقابل تشخیص)$"), instrument)],
-                END_ANNOT: [MessageHandler(filters.Regex("^(0|1|2|تحریر|شعر|غیرقابل تشخیص)$"), end_annotation)],
-            },
-            fallbacks=[CommandHandler("cancel_annotation", cancel_annotation)],
-        )
-    '''
     
 
     annotation_handler = ConversationHandler(
@@ -743,6 +819,7 @@ def main()-> None:
     app.add_handler(conv_handler)
     app.add_handler(annotation_handler)
     app.add_handler(label_handler)
+    app.add_handler(MessageHandler(filters.ALL, handle_message))
 
     app.run_polling()
 

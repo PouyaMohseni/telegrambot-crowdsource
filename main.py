@@ -200,7 +200,7 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     await update.message.reply_text(
             "بررسی مهارت های شنیداری شما پایان یافت\\. \n\n"
-            f"سطح شما {level} می باشد\\.",
+            f"سطح شما {level} می‌باشد\\.",
             reply_markup=ReplyKeyboardRemove(),
             parse_mode='MarkdownV2',
             )
@@ -214,7 +214,7 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             "در هنگامی که صدای خواننده در قطعه وجود داشته باشد، در مورد وجود یا عدم وجود تحریر نیز پرسیده می‌شود\\. \n\n"
             ">تحریر یا چَهچَهه \\(چَه‌چَه\\) نوعی زینت آوازی است که به وسیله آن خواننده، صدایی آهنگین و *بدون کلام* را تولید می‌ کند\\.\n"
             ">بنابر این تعریف، هر صوتی از خواننده که بدون کلام باشد *تحریر* است\\. \n\n"
-            "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، *تحریر* را انتخاب کرده\\. در غیر این صورت، *آواز* را انتخاب کنید\\. \n\n"
+            "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، *تحریر* را انتخاب کرده\\. در غیر این صورت، *شعر* را انتخاب کنید\\. \n\n"
             "برای برچسب زدن قطعات /annotate را فشار دهید\\.",
             reply_markup=ReplyKeyboardRemove(),
             parse_mode='MarkdownV2',
@@ -261,7 +261,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     applied_samples = samples[samples['apply'] == 1]
 
     # Filter on level
-    filtered_samples = applied_samples[applied_samples['level'] <= level]
+    filtered_samples = applied_samples[applied_samples['level'] == level]
 
     # Filter on num_annotation
     filtered_samples = filtered_samples[filtered_samples['num_annotation'] == filtered_samples['num_annotation'].min()]
@@ -304,8 +304,16 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     audio_file = open(f"./dataset/annotation_samples/{sample_id}", "rb")
     await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="#m"+sample_id.replace('-','_').replace('.mp3',''))
     audio_file.close()
-    
-    
+
+
+    mapped_instruments = [farsi_instruments[instrument] for instrument in instruments]
+    instrument_print =  "*" + "*, *".join(mapped_instruments[:-1]) + "* and *" + mapped_instruments[-1] + "*"
+    await update.message.reply_text(
+        f"در این قطعه حضور {instrument_print} محتمل است.",
+        reply_markup=ReplyKeyboardRemove(),
+        parse_mode='Markdown',
+    )
+
     if instrument=="singer":
         # Ask for singer annotation
         '''
@@ -600,7 +608,7 @@ async def quality(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     # Ask for 'q_reason' annotation
     await update.message.reply_text(
-            f"در یک کلمه، جمله یا عبارت، دلیلتان را برای انتخاب {text} از 5 بنویسید. (تایپ کنید) ",
+            f"در یک کلمه، جمله یا عبارت، دلیلتان را برای انتخاب {text} از 5 برای *کیفیت قطعه* بنویسید. (تایپ کنید) ",
             reply_markup=ForceReply(
                 input_field_placeholder=f"مثال: {random_reply[0]}، {random_reply[1]}، {random_reply[2]} یا ..."[:64]
             ),

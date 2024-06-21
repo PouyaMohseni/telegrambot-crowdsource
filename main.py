@@ -15,6 +15,10 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
+USER_PATH = './dataframe/user.xlsx'
+ANNOTATION_PATH, ANNOTATION_SAMPLES_PATH = './dataframe/annotation.xlsx', './dataframe/annotation_samples.xlsx'
+EMOTION_PATH, EMOTION_SAMPLES_PATH = './dataframe/emotion.xlsx', './dataframe/emotion_samples.xlsx'
+TRUTH1_PATH, TRUTH2_PATH, TRUTH3_PATH = './dataset/truth/track 1.mp3', './dataset/truth/track 2.mp3', './dataset/truth/track 3.mp3'
 
 ABILITY, GTRUTH1, GTRUTH2, GTRUTH3 = range(4)
 INSTRUMENT, AVAZ, END_ANNOT = range(3)
@@ -81,7 +85,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     ability = ability_mapping[text]
 
     try:
-        df = pd.read_excel('./dataframe/user.xlsx')
+        df = pd.read_excel(USER_PATH)
     except FileNotFoundError:
         df = pd.DataFrame(columns=['chat_id', 'name', 'answer', 'correct', 'credit', 'level', 'num_annotation'])
 
@@ -98,7 +102,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text('متشکرم!')
 
     # Save the updated data
-    df.to_excel('./dataframe/user.xlsx', index=False)
+    df.to_excel(USER_PATH, index=False)
             
 
     await update.message.reply_text(       
@@ -109,7 +113,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور", "تنبک"]]
     
-    audio_file = open("./dataset/truth/track 1.mp3", "rb")
+    audio_file = open(TRUTH1_PATH, "rb")
     await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="track 1")
     audio_file.close()
     
@@ -124,19 +128,18 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
 
 async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.message.from_user
     chat_id = update.message.chat_id
     text = update.message.text
 
 
     answer = 2*(text=="نی")
-    df = pd.read_excel('./dataframe/user.xlsx')
+    df = pd.read_excel(USER_PATH)
     df.loc[df['chat_id'] == chat_id, 'correct'] = df.loc[df['chat_id'] == chat_id, 'correct'] + answer
-    df.to_excel('./dataframe/user.xlsx', index=False)
+    df.to_excel(USER_PATH, index=False)
     
     reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور", "تنبک"]]
 
-    audio_file = open("./dataset/truth/track 2.mp3", "rb")
+    audio_file = open(TRUTH2_PATH, "rb")
     await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="track 2")
     audio_file.close()
 
@@ -155,13 +158,13 @@ async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
     answer = 2*(text=="کمانچه")
-    df = pd.read_excel('./dataframe/user.xlsx')
+    df = pd.read_excel(USER_PATH)
     df.loc[df['chat_id'] == chat_id, 'correct'] = df.loc[df['chat_id'] == chat_id, 'correct'] + answer
-    df.to_excel('./dataframe/user.xlsx', index=False)
+    df.to_excel(USER_PATH, index=False)
 
     reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور", "تنبک"]]
 
-    audio_file = open("./dataset/truth/track 3.mp3", "rb")
+    audio_file = open(TRUTH3_PATH, "rb")
     await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="track 3")
     audio_file.close()
 
@@ -180,7 +183,7 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text = update.message.text
 
     answer = 2*(text=="تار")
-    df = pd.read_excel('./dataframe/user.xlsx')
+    df = pd.read_excel(USER_PATH)
     df.loc[df['chat_id'] == chat_id, 'correct'] += answer
 
     # Updating the credit
@@ -193,7 +196,7 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     df.loc[df['chat_id'] == chat_id, 'level'] = level
 
-    df.to_excel('./dataframe/user.xlsx', index=False)
+    df.to_excel(USER_PATH, index=False)
 
     await update.message.reply_text(
             "بررسی مهارت های شنیداری شما پایان یافت\\. \n\n"
@@ -241,7 +244,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.message.chat_id
 
-    df = pd.read_excel('./dataframe/user.xlsx')
+    df = pd.read_excel(USER_PATH)
 
     if chat_id not in df['chat_id'].values:
         await update.message.reply_text(
@@ -252,7 +255,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     level = df.loc[df['chat_id'] == chat_id, 'level'].values[0]
 
     # Load samples dataframe
-    samples = pd.read_excel('./dataframe/annotation_samples.xlsx')
+    samples = pd.read_excel(ANNOTATION_SAMPLES_PATH)
 
     # Filter on apply
     applied_samples = samples[samples['apply'] == 1]
@@ -425,19 +428,19 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     row_new = {"sample_id": sample_id, "chat_id": chat_id, "level": level}
     row_new.update(row)
     
-    df = pd.read_excel('./dataframe/annotation.xlsx')
+    df = pd.read_excel(ANNOTATION_PATH)
     df.loc[len(df)] = row_new
-    df.to_excel('./dataframe/annotation.xlsx', index=False)
+    df.to_excel(ANNOTATION_PATH, index=False)
 
     # Itelabel an annotation
-    samples = pd.read_excel('./dataframe/annotation_samples.xlsx')
+    samples = pd.read_excel(ANNOTATION_SAMPLES_PATH)
     samples.loc[samples['sample_id'] == sample_id, 'num_annotation'] += 1
-    samples.to_excel('./dataframe/annotation_samples.xlsx', index=False)
+    samples.to_excel(ANNOTATION_SAMPLES_PATH, index=False)
     
 
-    df = pd.read_excel('./dataframe/user.xlsx')
+    df = pd.read_excel(USER_PATH)
     df.loc[df['chat_id'] == chat_id, 'num_annotation'] += 1
-    df.to_excel('./dataframe/user.xlsx', index=False)
+    df.to_excel(USER_PATH, index=False)
 
     # Finish replay
     await update.message.reply_text(
@@ -470,7 +473,7 @@ async def cancel_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 async def label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.message.chat_id
 
-    df = pd.read_excel('./dataframe/user.xlsx')
+    df = pd.read_excel(USER_PATH)
 
     if chat_id not in df['chat_id'].values:
         await update.message.reply_text(
@@ -481,7 +484,7 @@ async def label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     level = df.loc[df['chat_id'] == chat_id, 'level'].values[0]
 
     # Load samples dataframe
-    samples = pd.read_excel('./dataframe/emotion_samples.xlsx')
+    samples = pd.read_excel(EMOTION_SAMPLES_PATH)
 
     # Filter on apply
     applied_samples = samples[samples['apply'] == 1]
@@ -673,20 +676,20 @@ async def end_label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     row_new.update(row)
 
 
-    df = pd.read_excel('./dataframe/emotion.xlsx')
+    df = pd.read_excel(EMOTION_PATH)
     df.loc[len(df)] = row_new
-    df.to_excel('./dataframe/emotion.xlsx', index=False)
+    df.to_excel(EMOTION_PATH, index=False)
     
     
     # Iterate an annotation
-    samples = pd.read_excel('./dataframe/emotion_samples.xlsx')
+    samples = pd.read_excel(EMOTION_SAMPLES_PATH)
     samples.loc[samples['sample_id'] == sample_id, 'num_annotation'] += 1
-    samples.to_excel('./dataframe/emotion_samples.xlsx', index=False)
+    samples.to_excel(EMOTION_SAMPLES_PATH, index=False)
     
 
-    df = pd.read_excel('./dataframe/user.xlsx')
+    df = pd.read_excel(USER_PATH)
     df.loc[df['chat_id'] == chat_id, 'num_annotation'] += 1
-    df.to_excel('./dataframe/user.xlsx', index=False)
+    df.to_excel(USER_PATH, index=False)
 
     # Finish replay
     await update.message.reply_text(
@@ -719,8 +722,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # Process hashtag messages
     if '#' in message_text[0]:
         sample_id = message_text[2:].replace('_', '-')+".mp3"
-        if message_text[1]=="m": dataframe_path, samples_path = './dataframe/annotation.xlsx', './dataframe/annotation_samples.xlsx' 
-        else: dataframe_path, samples_path = './dataframe/emotion.xlsx', './dataframe/emotion_samples.xlsx'
+        if message_text[1]=="m": dataframe_path, samples_path = ANNOTATION_PATH, ANNOTATION_SAMPLES_PATH 
+        else: dataframe_path, samples_path = EMOTION_PATH, EMOTION_SAMPLES_PATH
         
         # Read the dataframe
         df = pd.read_excel(dataframe_path)
@@ -752,7 +755,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 )
             
     # Preserved output
-    df = pd.read_excel('./dataframe/user.xlsx')
+    df = pd.read_excel(USER_PATH)
 
     if chat_id not in df['chat_id'].values:
         await update.message.reply_text(
@@ -818,7 +821,7 @@ def main()-> None:
     app.add_handler(conv_handler)
     app.add_handler(annotation_handler)
     app.add_handler(label_handler)
-    app.add_handler(MessageHandler(filters.ALL, handle_message))
+    app.add_handler(MessageHandler(filters.Regex(r"^(?!\/).*"), handle_message))
 
     app.run_polling()
 

@@ -1,9 +1,10 @@
 from telegram.ext import CommandHandler, MessageHandler, ConversationHandler, filters
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, ForceReply, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+import pandas as pd
 import logging
 import random
-import pandas as pd
+import asyncio
 
 
 # Enable logging
@@ -61,8 +62,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         ]
 
     await update.message.reply_text(
-        "متشکریم! همکاری شما کمک بزرگی در راستای تحقق اهداف ذکر شده است. \n"
-        "برای اطلاعات بیشتر، کانال @PemLab را دنبال کنید.\n\n"
+        "متشکریم! همکاری شما کمک بزرگی در راستای تحقق اهداف ذکر شده است. \n\n"
+        "برای اطلاعات بیشتر، کانال @PemLab را دنبال کنید.\n"
         "برای توقف دکمه /cancel را فشار دهید."
     )
 
@@ -295,19 +296,19 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Make the context
     context.user_data["sample_id"] = sample_id
     context.user_data["instruments"] = instruments
-    context.user_data["annotations"] = basic_annotation
+    context.user_data["annotations"] = basic_annotation.copy()
+
+    mapped_instruments = [farsi_instruments[instrument] for instrument in instruments]
     instrument = context.user_data["instruments"].pop(0)
     context.user_data["last_instrument"] = instrument
     context.user_data['level'] = level
 
     # Send this sample
     audio_file = open(f"./dataset/annotation_samples/{sample_id}", "rb")
-    await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="#m"+sample_id.replace('-','_').replace('.mp3',''))
+    await context.bot.send_voice(chat_id=chat_id, voice=audio_file)#, caption="#m"+sample_id.replace('-','_').replace('.mp3',''))
     audio_file.close()
 
-
-    mapped_instruments = [farsi_instruments[instrument] for instrument in instruments]
-    instrument_print =  "*" + "*, *".join(mapped_instruments[:-1]) + "* and *" + mapped_instruments[-1] + "*"
+    instrument_print =  "*" + "*، *".join(mapped_instruments[:-1]) + "* و *" + mapped_instruments[-1] + "*"
     await update.message.reply_text(
         f"در این قطعه حضور {instrument_print} محتمل است.",
         reply_markup=ReplyKeyboardRemove(),
@@ -452,14 +453,17 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Finish replay
     await update.message.reply_text(
-        "برچسب زنی این قطعه پایان یافت. بسیار متشکریم! \n"
-        "اگر در برچسب زنی این قطعه اشتباه کردید،\n" 
+        "برچسب زنی این قطعه پایان یافت. بسیار متشکریم!\n\n"
+        "اگر در برچسب‌زنی این قطعه اشتباه کردید و می‌خواهید نظرتان را حذف کنید،\n" 
         f"`#m{sample_id.replace('-','_').replace('.mp3','')}`"
-        "(کلیک برای کپی)\n"
-        "را ارسال کنید.\n\n"
-        "برای برچسب‌زنی يک قطعه ديگر /annotate را فشار دهيد.",
+        "\n"
+        "را ارسال کنید.",
         reply_markup=ReplyKeyboardRemove(),
         parse_mode='Markdown',
+    )
+    await update.message.reply_text(
+        "برای برچسب‌زنی يک قطعه ديگر /annotate را فشار دهيد.",
+        reply_markup=ReplyKeyboardRemove(),
     )
         
     return ConversationHandler.END
@@ -529,7 +533,7 @@ async def label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Send this sample
     audio_file = open(f"./dataset/emotion_samples/{sample_id}", "rb")
-    await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="#e"+sample_id.replace('-','_').replace('.mp3',''))
+    await context.bot.send_voice(chat_id=chat_id, voice=audio_file)#, caption="#e"+sample_id.replace('-','_').replace('.mp3',''))
     audio_file.close()
     
     # Make a user context
@@ -630,7 +634,7 @@ async def q_reason(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     emotion_text_out = context.user_data["emotion_text"].pop(0)
     reply_keyboard = [["0%", "20%", "40%", "60%", "80%", "100%"]]
     await update.message.reply_text(
-            f"شدت احساسات {emotion_text_out} در این قطعه چقدر بود؟\n (100%=بیشترین / 0%=عدم برانگیختگی این احساس)",
+            f"شدت احساسات *{emotion_text_out}* در این قطعه چقدر بود؟\n (100%=بیشترین / 0%=عدم برانگیختگی این احساس)",
             reply_markup=ReplyKeyboardMarkup(
                 reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{emotion_text_out}؟"
             ),
@@ -701,14 +705,17 @@ async def end_label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Finish replay
     await update.message.reply_text(
-        "برچسب زنی این قطعه پایان یافت. بسیار متشکریم! \n"
-        "اگر در برچسب زنی این قطعه اشتباه کردید،\n" 
+        "برچسب زنی این قطعه پایان یافت. بسیار متشکریم!\n\n"
+        "اگر در برچسب‌زنی این قطعه اشتباه کردید و می‌خواهید نظرتان را حذف کنید،\n" 
         f"`#e{sample_id.replace('-','_').replace('.mp3','')}`"
-        "(کلیک برای کپی)\n"
-        "را ارسال کنید.\n\n"
-        "برای برچسب زنی يک قطعه ديگر /label را فشار دهيد.",
+        "\n"
+        "را ارسال کنید.",
         reply_markup=ReplyKeyboardRemove(),
         parse_mode='Markdown',
+    )
+    await update.message.reply_text(
+        "برای برچسب‌زنی يک قطعه ديگر /label را فشار دهيد.",
+        reply_markup=ReplyKeyboardRemove(),
     )
         
     return ConversationHandler.END
@@ -837,7 +844,7 @@ def main()-> None:
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
 
 
 

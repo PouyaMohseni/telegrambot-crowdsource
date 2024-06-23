@@ -347,14 +347,16 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             
     else:
         # Ask the instrument annotation
-        reply_keyboard = [["0", "1", "2","3"]]
+        reply_keyboard = [["0", "1", "2", "3"]]
         await update.message.reply_text(
-            f"صدای *{farsi_instruments[instrument]}* چقدر پررنگ بود؟\n (3=بیشترین / 0=عدم حضور)",
+            f"چقدر اطمینان دارید که ساز *{farsi_instruments[instrument]}* در قطعه حضور دارد؟\n"
+            "(3=بیشترین اطمینان/ 0=عدم حضور)",
             reply_markup=ReplyKeyboardMarkup(
                 reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{farsi_instruments[instrument]}؟"
             ),
             parse_mode='Markdown',
         )
+
         if len(context.user_data["instruments"]) > 0:
             next_instrument = context.user_data["instruments"].pop(0)
             context.user_data["next_instrument"] = next_instrument
@@ -402,7 +404,8 @@ async def instrument(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     # Ask the kamancheh annotation 
     reply_keyboard = [["0", "1", "2", "3"]]
     await update.message.reply_text(
-        f"حضور ساز *{farsi_instruments[instrument]}* چقدر پررنگ بود؟\n (3=بیشترین / 0=عدم حضور)",
+        f"چقدر اطمینان دارید که ساز *{farsi_instruments[instrument]}* در قطعه حضور دارد؟\n"
+        "(3=بیشترین اطمینان/ 0=عدم حضور)",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{farsi_instruments[instrument]}؟"
         ),
@@ -612,7 +615,7 @@ async def quality(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     # Ask for 'q_reason' annotation
     await update.message.reply_text(
-            f"در یک کلمه، جمله یا عبارت، دلیلتان را برای انتخاب {text} از 5 برای *کیفیت قطعه* بنویسید. (تایپ کنید) ",
+            f"در یک کلمه، عبارت یا جمله، دلیلتان را برای انتخاب {text} از 5 برای *کیفیت قطعه* بنویسید. (تایپ کنید) ",
             reply_markup=ForceReply(
                 input_field_placeholder=f"مثال: {random_reply[0]}، {random_reply[1]}، {random_reply[2]} یا ..."[:64]
             ),
@@ -797,7 +800,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 # Main function
 def main()-> None:
 
-    app = ApplicationBuilder().token("6900009914:AAGomuchkUQ-hFQcVQLtK7E8gJXrRU4AwN0").build()
+    app = ApplicationBuilder().token("#TOKEN").build()
 
     conv_handler = ConversationHandler(
             entry_points = [CommandHandler("start", start)],

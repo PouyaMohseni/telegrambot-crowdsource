@@ -27,12 +27,12 @@ FAMILIAR, LIKE, QUALITY, Q_REASON, EMOTION, END_LABEL = range(6)
 
 all_instruments = ["singer", "tar", "ney", "setar", "santour", "kamancheh", "tonbak"]
 
-farsi_instruments = {"singer": "آواز", "tar": "تار", "ney": "نی", "setar": "سه تار", "santour": "سنتور", "kamancheh": "کمانچه", "tonbak":"تنبک"}
+farsi_instruments = {"singer": "آواز", "tar": "تار", "ney": "نی", "setar": "سه تار", "santour": "سنتور", "kamancheh": "کمانچه", "tonbak": "تنبک", "oud": "عود", "daf": "دف"}
 ability_mapping = {"کم: آشنایی کمی با سازهای موسیقی دارم": 0,
             "متوسط: با تفاوت صوتی برخی از سازهای موسیقی آشنا هستم": 1,
             "زیاد: گوش موسیقی من آموزش‌دیده است": 2
     }
-avaz_mapping = {"شعر و تحریر":3, "تحریر": 2, "شعر": 1, "وجود نداشت": 0}
+avaz_mapping = {"شعر و چه‌چه":3, "چه‌چه": 2, "شعر": 1, "وجود نداشت": 0}
 familiar_mapping = {"آشنا نیست": 0, "تا حدودی آشناست": 1, "بسیار آشناست": 2}
 
 basic_annotation = {instrument: -1 for instrument in all_instruments}
@@ -112,7 +112,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=ReplyKeyboardRemove(),
     )
 
-    reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور", "تنبک"]]
+    reply_keyboard = [["تار", "نی", "کمانچه", "عود"], ["سه تار", "سنتور", "تنبک", "دف"]]
     
     audio_file = open(TRUTH1_PATH, "rb")
     await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="track 1")
@@ -138,7 +138,7 @@ async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     df.loc[df['chat_id'] == chat_id, 'correct'] = df.loc[df['chat_id'] == chat_id, 'correct'] + answer
     df.to_excel(USER_PATH, index=False)
     
-    reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور", "تنبک"]]
+    reply_keyboard = [["تار", "نی", "کمانچه", "عود"], ["سه تار", "سنتور", "تنبک", "دف"]]
 
     audio_file = open(TRUTH2_PATH, "rb")
     await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="track 2")
@@ -163,7 +163,7 @@ async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     df.loc[df['chat_id'] == chat_id, 'correct'] = df.loc[df['chat_id'] == chat_id, 'correct'] + answer
     df.to_excel(USER_PATH, index=False)
 
-    reply_keyboard = [["تار", "نی", "کمانچه"], ["سه تار", "سنتور", "تنبک"]]
+    reply_keyboard = [["تار", "نی", "کمانچه", "عود"], ["سه تار", "سنتور", "تنبک", "دف"]]
 
     audio_file = open(TRUTH3_PATH, "rb")
     await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="track 3")
@@ -212,10 +212,10 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             "هر بار، یک قطعه پنج ثانیه‌ای ارسال می‌شود و احتمال حضور سازهای مختلف در این قطعه، پرسیده می‌شود\\. \n\n"
             "اگر صدای سازی را در قطعه نشنیدید، 0 را انتخاب کنید\\. \n"
             "در صورتیکه صدای ساز را شنیدید، بین 1، 2 و 3 بسته به پررنگی حضور صدای ساز، انتخاب کنید\\. \n\n"
-            "در هنگامی که صدای خواننده در قطعه وجود داشته باشد، در مورد وجود یا عدم وجود تحریر نیز پرسیده می‌شود\\. \n\n"
-            ">تحریر یا چَهچَهه \\(چَه‌چَه\\) نوعی زینت آوازی است که به وسیله آن خواننده، صدایی آهنگین و *بدون کلام* را تولید می‌ کند\\.\n"
-            ">بنابر این تعریف، هر صوتی از خواننده که بدون کلام باشد *تحریر* است\\. \n\n"
-            "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، *تحریر* را انتخاب کرده\\. در غیر این صورت، *شعر* را انتخاب کنید\\. \n\n"
+            "در هنگامی که صدای خواننده در قطعه وجود داشته باشد، در مورد وجود یا عدم وجود چه‌چه نیز پرسیده می‌شود\\. \n\n"
+            ">چه‌چه یا چَهچَهه \\(تحریر\\) نوعی زینت آوازی است که به وسیله آن خواننده، صدایی آهنگین و *بدون کلام* را تولید می‌ کند\\.\n"
+            ">بنابر این تعریف، هر صوتی از خواننده که بدون کلام باشد *چه‌چه* است\\. \n\n"
+            "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، *چه‌چه* را انتخاب کرده\\. در غیر این صورت، *شعر* را انتخاب کنید\\. \n\n"
             "برای برچسب زدن قطعات /annotate را فشار دهید\\.",
             reply_markup=ReplyKeyboardRemove(),
             parse_mode='MarkdownV2',
@@ -328,7 +328,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             )
             return AVAZ
         '''
-        reply_keyboard = [["تحریر"], ["شعر"], ["شعر و تحریر"], ["وجود نداشت"]]
+        reply_keyboard = [["چه‌چه"], ["شعر"], ["شعر و چه‌چه"], ["وجود نداشت"]]
         await update.message.reply_text(
                 "صدای *خواننده* چگونه بود؟",
                 reply_markup=ReplyKeyboardMarkup(
@@ -371,9 +371,9 @@ async def avaz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     context.user_data["annotations"][context.user_data["last_instrument"]] = text
 
     if text == "بله":
-        reply_keyboard = [["تحریر", "شعر", "غیرقابل تشخیص"]]
+        reply_keyboard = [["چه‌چه", "شعر", "غیرقابل تشخیص"]]
         await update.message.reply_text(
-            "آواز به صورت تحریر بود یا شعر؟",
+            "آواز به صورت چه‌چه بود یا شعر؟",
             reply_markup=ReplyKeyboardMarkup(
                 reply_keyboard, one_time_keyboard=True, input_field_placeholder="نوع آواز?"
             ),
@@ -806,9 +806,9 @@ def main()-> None:
             entry_points = [CommandHandler("start", start)],
             states={
                 ABILITY: [MessageHandler(filters.Regex("^(کم: آشنایی کمی با سازهای موسیقی دارم|متوسط: با تفاوت صوتی برخی از سازهای موسیقی آشنا هستم|زیاد: گوش موسیقی من آموزش‌دیده است)$"), gtruth1)],
-                GTRUTH1: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک)$"), gtruth2)],
-                GTRUTH2: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک)$"), gtruth3)],
-                GTRUTH3: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک)$"), credit)],
+                GTRUTH1: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک|عود|دف)$"), gtruth2)],
+                GTRUTH2: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک|عود|دف)$"), gtruth3)],
+                GTRUTH3: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک|عود|دف)$"), credit)],
             },
             fallbacks=[CommandHandler("cancel", cancel)],
         )
@@ -817,8 +817,8 @@ def main()-> None:
     annotation_handler = ConversationHandler(
             entry_points=[CommandHandler("annotate", annotate)],
             states={
-                INSTRUMENT: [MessageHandler(filters.Regex("^(0|1|2|3|شعر و تحریر|وجود نداشت|شعر|تحریر)$"), instrument)],
-                END_ANNOT: [MessageHandler(filters.Regex("^(0|1|2|3|وجود نداشت|شعر و تحریر|شعر|تحریر)$"), end_annotation)],
+                INSTRUMENT: [MessageHandler(filters.Regex("^(0|1|2|3|شعر و چه‌چه|وجود نداشت|شعر|چه‌چه)$"), instrument)],
+                END_ANNOT: [MessageHandler(filters.Regex("^(0|1|2|3|وجود نداشت|شعر و چه‌چه|شعر|چه‌چه)$"), end_annotation)],
             },
             fallbacks=[CommandHandler("cancel_annotation", cancel_annotation)],
         )

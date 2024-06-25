@@ -25,7 +25,7 @@ ABILITY, GTRUTH1, GTRUTH2, GTRUTH3 = range(4)
 INSTRUMENT, AVAZ, END_ANNOT = range(3)
 FAMILIAR, LIKE, QUALITY, Q_REASON, EMOTION, END_LABEL = range(6)
 
-all_instruments = ["singer", "tar", "ney", "setar", "santour", "kamancheh", "tonbak"]
+all_instruments = ["singer", "tar", "ney", "setar", "santour", "kamancheh", "tonbak", "oud", "daf"]
 
 farsi_instruments = {"singer": "آواز", "tar": "تار", "ney": "نی", "setar": "سه تار", "santour": "سنتور", "kamancheh": "کمانچه", "tonbak": "تنبک", "oud": "عود", "daf": "دف"}
 ability_mapping = {"کم: آشنایی کمی با سازهای موسیقی دارم": 0,
@@ -62,7 +62,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         ]
 
     await update.message.reply_text(
-        "متشکریم! همکاری شما کمک بزرگی در راستای تحقق اهداف ذکر شده است. \n\n"
+        "متشکریم! ❤️ همکاری شما کمک شایانی در راستای تحقق اهداف ذکر شده است. \n\n"
         "برای اطلاعات بیشتر، کانال @PemLab را دنبال کنید.\n"
         "برای توقف دکمه /cancel را فشار دهید."
     )
@@ -317,18 +317,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     if instrument=="singer":
         # Ask for singer annotation
-        '''
-            reply_keyboard = [["بله", "خیر"]]
-            await update.message.reply_text(
-                "آيا قطعه *خواننده* داشت؟",
-                reply_markup=ReplyKeyboardMarkup(
-                    reply_keyboard, one_time_keyboard=True, input_field_placeholder="خواننده?"
-                ),
-                parse_mode='Markdown',
-            )
-            return AVAZ
-        '''
-        reply_keyboard = [["چه‌چه"], ["شعر"], ["شعر و چه‌چه"], ["وجود نداشت"]]
+        reply_keyboard = [["شعر"], ["چه‌چه"], ["شعر و چه‌چه"], ["وجود نداشت"]]
         await update.message.reply_text(
                 "صدای *خواننده* چگونه بود؟",
                 reply_markup=ReplyKeyboardMarkup(
@@ -350,7 +339,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_keyboard = [["0", "1", "2", "3"]]
         await update.message.reply_text(
             f"چقدر اطمینان دارید که ساز *{farsi_instruments[instrument]}* در قطعه حضور دارد؟\n"
-            "(3=بیشترین اطمینان/ 0=عدم حضور)",
+            "(3=بیشترین اطمینان حضور/ 0=اطمینان از عدم حضور)",
             reply_markup=ReplyKeyboardMarkup(
                 reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{farsi_instruments[instrument]}؟"
             ),
@@ -405,7 +394,7 @@ async def instrument(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     reply_keyboard = [["0", "1", "2", "3"]]
     await update.message.reply_text(
         f"چقدر اطمینان دارید که ساز *{farsi_instruments[instrument]}* در قطعه حضور دارد؟\n"
-        "(3=بیشترین اطمینان/ 0=عدم حضور)",
+        "(3=بیشترین اطمینان حضور/ 0=اطمینان از عدم حضور)",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder=f"{farsi_instruments[instrument]}؟"
         ),
@@ -456,7 +445,7 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Finish replay
     await update.message.reply_text(
-        "برچسب زنی این قطعه پایان یافت. بسیار متشکریم!\n\n"
+        "✅ برچسب زنی این قطعه پایان یافت. بسیار متشکریم!\n\n"
         "اگر در برچسب‌زنی این قطعه اشتباه کردید و می‌خواهید نظرتان را حذف کنید،\n" 
         f"`#m{sample_id.replace('-','_').replace('.mp3','')}`"
         "\n"
@@ -708,7 +697,7 @@ async def end_label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Finish replay
     await update.message.reply_text(
-        "برچسب زنی این قطعه پایان یافت. بسیار متشکریم!\n\n"
+        "✅ برچسب زنی این قطعه پایان یافت. بسیار متشکریم!\n\n"
         "اگر در برچسب‌زنی این قطعه اشتباه کردید و می‌خواهید نظرتان را حذف کنید،\n" 
         f"`#e{sample_id.replace('-','_').replace('.mp3','')}`"
         "\n"

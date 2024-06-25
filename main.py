@@ -62,7 +62,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         ]
 
     await update.message.reply_text(
-        "متشکریم! ❤️ همکاری شما کمک شایانی در راستای تحقق اهداف ذکر شده است. \n\n"
+        "متشکریم! همکاری شما کمک شایانی در راستای تحقق اهداف ذکر شده است. ❤️ \n\n"
         "برای اطلاعات بیشتر، کانال @PemLab را دنبال کنید.\n"
         "برای توقف دکمه /cancel را فشار دهید."
     )

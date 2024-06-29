@@ -4,7 +4,6 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import pandas as pd
 import logging
 import random
-import asyncio
 
 
 # Enable logging
@@ -32,7 +31,7 @@ ability_mapping = {"کم: آشنایی کمی با سازهای موسیقی د�
             "متوسط: با تفاوت صوتی برخی از سازهای موسیقی آشنا هستم": 1,
             "زیاد: گوش موسیقی من آموزش‌دیده است": 2
     }
-avaz_mapping = {"شعر و چه‌چه":3, "چه‌چه": 2, "شعر": 1, "وجود نداشت": 0}
+avaz_mapping = {"کلام و چه‌چه":3, "چه‌چه": 2, "کلام": 1, "وجود نداشت": 0}
 familiar_mapping = {"آشنا نیست": 0, "تا حدودی آشناست": 1, "بسیار آشناست": 2}
 
 basic_annotation = {instrument: -1 for instrument in all_instruments}
@@ -62,7 +61,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         ]
 
     await update.message.reply_text(
-        "متشکریم! همکاری شما کمک شایانی در راستای تحقق اهداف ذکر شده است. ❤️ \n\n"
+        "متشکریم! همکاری شما کمک شایانی در راستای تحقق اهداف ذکر شده است. \n"
+        "برای تجربه شنیداری بهتر، از هدفون استفاده نمایید.\n\n"
         "برای اطلاعات بیشتر، کانال @PemLab را دنبال کنید.\n"
         "برای توقف دکمه /cancel را فشار دهید."
     )
@@ -71,7 +71,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "در ابتدا مهارت شنیداری موسیقی (Ear-training) شما بررسی میشود. \n\n"
         "گوش موسیقی شما چقدر قوی است؟",
         reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="سطح گوش موسيقی"
+            reply_keyboard, one_time_keyboard=True, input_field_placeholder="سطح گوش موسيقی؟"
         ),
     )
 
@@ -94,13 +94,13 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if chat_id in df['chat_id'].values:
         df.loc[df['chat_id'] == chat_id, 'answer'] = ability
         df.loc[df['chat_id'] == chat_id, ['correct', 'credit', 'level', 'num_annotation']] = 0
-        await update.message.reply_text("متشکرم! پاسخ قبلی شما به روز رسانی شد.")
+        await update.message.reply_text("متشکریم! پاسخ قبلی شما به روز رسانی شد.")
 
     else:
         # Append the new answer
         new_entry = pd.DataFrame([[chat_id, user.first_name, ability, 0, 0, 0, 0]], columns=['chat_id', 'name', 'answer', 'correct', 'credit', 'level', 'num_annotation'])
         df = pd.concat([df, new_entry], ignore_index=True)
-        await update.message.reply_text('متشکرم!')
+        await update.message.reply_text('متشکریم!')
 
     # Save the updated data
     df.to_excel(USER_PATH, index=False)
@@ -133,7 +133,7 @@ async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text = update.message.text
 
 
-    answer = 2*(text=="نی")
+    answer = 2*(text=="سنتور")
     df = pd.read_excel(USER_PATH)
     df.loc[df['chat_id'] == chat_id, 'correct'] = df.loc[df['chat_id'] == chat_id, 'correct'] + answer
     df.to_excel(USER_PATH, index=False)
@@ -211,11 +211,11 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text(
             "هر بار، یک قطعه پنج ثانیه‌ای ارسال می‌شود و احتمال حضور سازهای مختلف در این قطعه، پرسیده می‌شود\\. \n\n"
             "اگر صدای سازی را در قطعه نشنیدید، 0 را انتخاب کنید\\. \n"
-            "در صورتیکه صدای ساز را شنیدید، بین 1، 2 و 3 بسته به پررنگی حضور صدای ساز، انتخاب کنید\\. \n\n"
+            "در صورتیکه صدای ساز را شنیدید، بین 1، 2 و 3 بسته به احتمال حضور صدای ساز، انتخاب کنید\\. \n\n"
             "در هنگامی که صدای خواننده در قطعه وجود داشته باشد، در مورد وجود یا عدم وجود چه‌چه نیز پرسیده می‌شود\\. \n\n"
             ">چه‌چه یا چَهچَهه \\(تحریر\\) نوعی زینت آوازی است که به وسیله آن خواننده، صدایی آهنگین و *بدون کلام* را تولید می‌ کند\\.\n"
             ">بنابر این تعریف، هر صوتی از خواننده که بدون کلام باشد *چه‌چه* است\\. \n\n"
-            "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، *چه‌چه* را انتخاب کرده\\. در غیر این صورت، *شعر* را انتخاب کنید\\. \n\n"
+            "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، *چه‌چه* را انتخاب کرده\\. در غیر این صورت، *کلام* را انتخاب کنید\\. \n\n"
             "برای برچسب زدن قطعات /annotate را فشار دهید\\.",
             reply_markup=ReplyKeyboardRemove(),
             parse_mode='MarkdownV2',
@@ -310,14 +310,14 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     instrument_print =  "*" + "*، *".join(mapped_instruments[:-1]) + "* و *" + mapped_instruments[-1] + "*"
     await update.message.reply_text(
-        f"در این قطعه حضور {instrument_print} محتمل است.",
+        f"در این قطعه تنها حضور {instrument_print} محتمل است.",
         reply_markup=ReplyKeyboardRemove(),
         parse_mode='Markdown',
     )
 
     if instrument=="singer":
         # Ask for singer annotation
-        reply_keyboard = [["شعر"], ["چه‌چه"], ["شعر و چه‌چه"], ["وجود نداشت"]]
+        reply_keyboard = [["کلام"], ["چه‌چه"], ["کلام و چه‌چه"], ["وجود نداشت"]]
         await update.message.reply_text(
                 "صدای *خواننده* چگونه بود؟",
                 reply_markup=ReplyKeyboardMarkup(
@@ -353,34 +353,6 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             
         
         return END_ANNOT
-
-'''
-async def avaz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    text = update.message.text
-    context.user_data["annotations"][context.user_data["last_instrument"]] = text
-
-    if text == "بله":
-        reply_keyboard = [["چه‌چه", "شعر", "غیرقابل تشخیص"]]
-        await update.message.reply_text(
-            "آواز به صورت چه‌چه بود یا شعر؟",
-            reply_markup=ReplyKeyboardMarkup(
-                reply_keyboard, one_time_keyboard=True, input_field_placeholder="نوع آواز?"
-            ),
-            parse_mode='Markdown',
-        )
-
-    # context.user_data["last_instrument"] = instrument last instrument doesnt change
-
-    # Save the annotation in the context
-    if len(context.user_data["instruments"]) > 0:
-        next_instrument = context.user_data["instruments"].pop(0)
-        context.user_data["next_instrument"] = next_instrument
-        return INSTRUMENT
-        
-    
-    return END_ANNOT
-'''
-
 
 
 async def instrument(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -806,8 +778,8 @@ def main()-> None:
     annotation_handler = ConversationHandler(
             entry_points=[CommandHandler("annotate", annotate)],
             states={
-                INSTRUMENT: [MessageHandler(filters.Regex("^(0|1|2|3|شعر و چه‌چه|وجود نداشت|شعر|چه‌چه)$"), instrument)],
-                END_ANNOT: [MessageHandler(filters.Regex("^(0|1|2|3|وجود نداشت|شعر و چه‌چه|شعر|چه‌چه)$"), end_annotation)],
+                INSTRUMENT: [MessageHandler(filters.Regex("^(0|1|2|3|کلام و چه‌چه|وجود نداشت|کلام|چه‌چه)$"), instrument)],
+                END_ANNOT: [MessageHandler(filters.Regex("^(0|1|2|3|وجود نداشت|کلام و چه‌چه|کلام|چه‌چه)$"), end_annotation)],
             },
             fallbacks=[CommandHandler("cancel_annotation", cancel_annotation)],
         )
@@ -828,7 +800,7 @@ def main()-> None:
     app.add_handler(conv_handler)
     app.add_handler(annotation_handler)
     app.add_handler(label_handler)
-    app.add_handler(MessageHandler(filters.Regex(r"^(?!\/).*"), handle_message))
+    app.add_handler(MessageHandler(filters.Regex("^#.*"), handle_message))
 
     app.run_polling()
 
@@ -836,7 +808,7 @@ def main()-> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
 
 
 

@@ -21,7 +21,7 @@ EMOTION_PATH, EMOTION_SAMPLES_PATH = './dataframe/emotion.xlsx', './dataframe/em
 TRUTH1_PATH, TRUTH2_PATH, TRUTH3_PATH = './dataset/truth/track 1.mp3', './dataset/truth/track 2.mp3', './dataset/truth/track 3.mp3'
 
 ABILITY, GTRUTH1, GTRUTH2, GTRUTH3 = range(4)
-INSTRUMENT, AVAZ, END_ANNOT = range(3)
+INSTRUMENT, END_ANNOT = range(2)
 FAMILIAR, LIKE, QUALITY, Q_REASON, EMOTION, END_LABEL = range(6)
 
 all_instruments = ["singer", "tar", "ney", "setar", "santour", "kamancheh", "tonbak", "oud", "daf"]
@@ -51,7 +51,31 @@ quality_example_mapping = {
 }
 
 # Start the bot
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    chat_id = update.message.chat_id
+    
+    df = pd.read_excel(USER_PATH)
+
+    # Check if the user has already submitted an answer     
+    if chat_id in df['chat_id'].values:
+        await update.message.reply_text("بررسی مهارت های شنیداری شما انجام شده است.")
+
+        level = df.loc[df['chat_id'] == chat_id, 'level'].values[0]
+
+        if level >= 2:
+            await update.message.reply_text(
+                "با فشردن /annotate یک قطعه دیگر را برچسب‌زنی کنید.",
+                reply_markup=ReplyKeyboardRemove()
+            )
+                    
+        else:
+            await update.message.reply_text(
+                "با فشردن /label یک قطعه دیگر را برچسب‌زنی کنید.",
+                reply_markup=ReplyKeyboardRemove()
+            )
+
+
+        return ConversationHandler.END
 
 
     reply_keyboard = [ #راز به راست
@@ -79,28 +103,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 # Handle the ear-training question and send the first gtruth
-async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = update.message.from_user
     chat_id = update.message.chat_id
     text = update.message.text
     ability = ability_mapping[text]
 
-    try:
-        df = pd.read_excel(USER_PATH)
-    except FileNotFoundError:
-        df = pd.DataFrame(columns=['chat_id', 'name', 'answer', 'correct', 'credit', 'level', 'num_annotation'])
-
-    # Check if the user has already submitted an answer     
-    if chat_id in df['chat_id'].values:
-        df.loc[df['chat_id'] == chat_id, 'answer'] = ability
-        df.loc[df['chat_id'] == chat_id, ['correct', 'credit', 'level', 'num_annotation']] = 0
-        await update.message.reply_text("متشکریم! پاسخ قبلی شما به روز رسانی شد.")
-
-    else:
-        # Append the new answer
-        new_entry = pd.DataFrame([[chat_id, user.first_name, ability, 0, 0, 0, 0]], columns=['chat_id', 'name', 'answer', 'correct', 'credit', 'level', 'num_annotation'])
-        df = pd.concat([df, new_entry], ignore_index=True)
-        await update.message.reply_text('متشکریم!')
+    df = pd.read_excel(USER_PATH)
+    
+    # Append the new answer
+    new_entry = pd.DataFrame([[chat_id, user.first_name, ability, 0, 0, 1, 0]], columns=['chat_id', 'name', 'answer', 'correct', 'credit', 'level', 'num_annotation'])
+    df = pd.concat([df, new_entry], ignore_index=True)
+    await update.message.reply_text('متشکریم!')
 
     # Save the updated data
     df.to_excel(USER_PATH, index=False)
@@ -128,7 +142,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     return GTRUTH1
     
 
-async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.message.chat_id
     text = update.message.text
 
@@ -153,7 +167,7 @@ async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     return GTRUTH2    
 
-async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.message.chat_id
     text = update.message.text
 
@@ -179,7 +193,7 @@ async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     return GTRUTH3
 
 
-async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.message.chat_id
     text = update.message.text
 
@@ -242,7 +256,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 
-async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.message.chat_id
 
     df = pd.read_excel(USER_PATH)
@@ -355,7 +369,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return END_ANNOT
 
 
-async def instrument(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def instrument(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Save the annotation in the context
     instrument = context.user_data["next_instrument"]
     text = update.message.text
@@ -385,7 +399,7 @@ async def instrument(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     return END_ANNOT
 
 
-async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Save the annotation in the context
     text = update.message.text
     context.user_data["annotations"][context.user_data["last_instrument"]] = text
@@ -446,7 +460,7 @@ async def cancel_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 
 
-async def label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.message.chat_id
 
     df = pd.read_excel(USER_PATH)
@@ -521,7 +535,7 @@ async def label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     return FAMILIAR
 
 
-async def familiar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def familiar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Recieve familiar label
     text = update.message.text
     mapped_text = familiar_mapping[text]
@@ -542,7 +556,7 @@ async def familiar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     return LIKE
 
 
-async def like(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def like(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Recieve familiar label
     text = update.message.text
     mapped_text = int(text)
@@ -563,7 +577,7 @@ async def like(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     return QUALITY
 
 
-async def quality(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def quality(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Recieve familiar label
     text = update.message.text
     mapped_text = int(text)
@@ -586,7 +600,7 @@ async def quality(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     return Q_REASON
 
 
-async def q_reason(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def q_reason(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Recieve familiar label
     text = update.message.text
     mapped_text = text
@@ -608,7 +622,7 @@ async def q_reason(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     return EMOTION
 
 
-async def emotion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def emotion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Recieve Q label
     text = update.message.text
     mapped_text = int(text[:-1])/100
@@ -633,7 +647,7 @@ async def emotion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     return END_LABEL
     
 
-async def end_label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def end_label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Recieve Q label
     text = update.message.text
     mapped_text = int(text[:-1])/100
@@ -694,9 +708,67 @@ async def cancel_label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     return ConversationHandler.END
 
 
+async def handle_every_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    chat_id = update.message.chat_id
+
+    # Preserved output
+    df = pd.read_excel(USER_PATH)
+
+    if chat_id not in df['chat_id'].values:
+        await update.message.reply_text(
+            "مهارت شنیداری شما بررسی نشده. برای ادامه /start را فشار دهید."
+        )
+        return True
+
+    level = df.loc[df['chat_id'] == chat_id, 'level'].values[0]
+
+    if level >= 2:
+        await update.message.reply_text(
+            "با فشردن /annotate یک قطعه دیگر را برچسب‌زنی کنید.",
+            reply_markup=ReplyKeyboardRemove()
+        )
+            
+    else:
+        await update.message.reply_text(
+            "با فشردن /label یک قطعه دیگر را برچسب‌زنی کنید.",
+            reply_markup=ReplyKeyboardRemove()
+        )
+
+    return True
+
+async def handle_every_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    chat_id = update.message.chat_id
+
+    # Preserved output
+    df = pd.read_excel(USER_PATH)
+
+    if chat_id not in df['chat_id'].values:
+        await update.message.reply_text(
+            "مهارت شنیداری شما بررسی نشده. برای ادامه /start را فشار دهید."
+        )
+        return True
+
+    level = df.loc[df['chat_id'] == chat_id, 'level'].values[0]
+
+    if level >= 2:
+        await update.message.reply_text(
+            "با فشردن /annotate یک قطعه دیگر را برچسب‌زنی کنید.",
+            reply_markup=ReplyKeyboardRemove()
+        )
+            
+    else:
+        await update.message.reply_text(
+            "با فشردن /label یک قطعه دیگر را برچسب‌زنی کنید.",
+            reply_markup=ReplyKeyboardRemove()
+        )
+
+    return True
+
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message_text = update.message.text
     chat_id = update.message.chat_id
+
 
     # Process hashtag messages
     if '#' in message_text[0]:
@@ -782,6 +854,7 @@ def main()-> None:
                 END_ANNOT: [MessageHandler(filters.Regex("^(0|1|2|3|وجود نداشت|کلام و چه‌چه|کلام|چه‌چه)$"), end_annotation)],
             },
             fallbacks=[CommandHandler("cancel_annotation", cancel_annotation)],
+            allow_reentry = True,
         )
     
     label_handler = ConversationHandler(
@@ -795,14 +868,19 @@ def main()-> None:
                 END_LABEL: [MessageHandler(filters.Regex("^(0%|20%|40%|60%|80%|100%)$"), end_label)],
             },
             fallbacks=[CommandHandler("cancel_label", cancel_label)],
+            allow_reentry = True,
         )
     
     app.add_handler(conv_handler)
     app.add_handler(annotation_handler)
     app.add_handler(label_handler)
     app.add_handler(MessageHandler(filters.Regex("^#.*"), handle_message))
+    #app.add_handler(MessageHandler(filters.COMMAND, handle_every_command))
+    #app.add_handler(MessageHandler(~filters.COMMAND, handle_every_message))
 
-    app.run_polling()
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
+
+    app.idle()
 
 
 

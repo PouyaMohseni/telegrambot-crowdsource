@@ -410,24 +410,30 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     row = context.user_data["annotations"]
     level = context.user_data["level"] 
 
-    # Convert every item to int
-    row = {key: int(value) if key != 'singer' else value for key, value in row.items()}
-    row_new = {"sample_id": sample_id, "chat_id": chat_id, "level": level}
-    row_new.update(row)
-    
-    df = pd.read_excel(ANNOTATION_PATH)
-    df.loc[len(df)] = row_new
-    df.to_excel(ANNOTATION_PATH, index=False)
+    # Try to add it to the dataset
+    try:
+        # Convert every item to int
+        row = {key: int(value) if key != 'singer' else value for key, value in row.items()}
+        row_new = {"sample_id": sample_id, "chat_id": chat_id, "level": level}
+        row_new.update(row)
+        
+        df = pd.read_excel(ANNOTATION_PATH)
+        df.loc[len(df)] = row_new
+        df.to_excel(ANNOTATION_PATH, index=False)
 
-    # Itelabel an annotation
-    samples = pd.read_excel(ANNOTATION_SAMPLES_PATH)
-    samples.loc[samples['sample_id'] == sample_id, 'num_annotation'] += 1
-    samples.to_excel(ANNOTATION_SAMPLES_PATH, index=False)
-    
+        # Itelabel an annotation
+        samples = pd.read_excel(ANNOTATION_SAMPLES_PATH)
+        samples.loc[samples['sample_id'] == sample_id, 'num_annotation'] += 1
+        samples.to_excel(ANNOTATION_SAMPLES_PATH, index=False)
+        
 
-    df = pd.read_excel(USER_PATH)
-    df.loc[df['chat_id'] == chat_id, 'num_annotation'] += 1
-    df.to_excel(USER_PATH, index=False)
+        df = pd.read_excel(USER_PATH)
+        df.loc[df['chat_id'] == chat_id, 'num_annotation'] += 1
+        df.to_excel(USER_PATH, index=False)
+
+    except:
+        logger.info("Err in tagging")
+        pass
 
     # Finish replay
     await update.message.reply_text(

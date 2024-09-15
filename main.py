@@ -886,7 +886,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 # Main function
 def main()-> None:
-    token = "6900009914:AAFbdwbNCq4V6Bvbuc8E4kSli_Hd9CxeW44"
+    token = "#TOKEN"
     #token = "7415325259:AAExXLDz3iBD6zRZExLfZp0l_QE_strnlLs"
     app = ApplicationBuilder().token(token).build()
 

@@ -85,10 +85,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         ]
 
     await update.message.reply_text(
-        "متشکریم! همکاری شما کمک شایانی در راستای تحقق اهداف ذکر شده است. \n"
+        "متشکریم! همکاری شما کمک شایانی در راستای تحقق اهداف ذکر شده است. \n\n"
         "برای تجربه شنیداری بهتر، از هدفون استفاده نمایید.\n\n"
-        "برای اطلاعات بیشتر، کانال @PemLab را دنبال کنید.\n"
-        "برای توقف دکمه /cancel را فشار دهید."
+        "برای اطلاعات بیشتر، کانال @PemLab را دنبال کنید."
     )
 
     await update.message.reply_text(
@@ -112,7 +111,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     df = pd.read_excel(USER_PATH)
     
     # Append the new answer
-    new_entry = pd.DataFrame([[chat_id, user.first_name, ability, 0, 0, 1, 0]], columns=['chat_id', 'name', 'answer', 'correct', 'credit', 'level', 'num_annotation'])
+    new_entry = pd.DataFrame([[chat_id, user.first_name, ability, 0, 0, 1, 0, 0]], columns=['chat_id', 'name', 'answer', 'correct', 'credit', 'level', 'num_annotation', 'num_label'])
     df = pd.concat([df, new_entry], ignore_index=True)
     await update.message.reply_text('متشکریم!')
 
@@ -126,7 +125,7 @@ async def gtruth1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         reply_markup=ReplyKeyboardRemove(),
     )
 
-    reply_keyboard = [["تار", "نی", "کمانچه", "عود"], ["سه تار", "سنتور", "تنبک", "دف"]]
+    reply_keyboard = [["تار", "نی", "کمانچه", "عود"], ["سه تار", "سنتور", "تنبک", "دف"], ["نمی‌دانم"]]
     
     audio_file = open(TRUTH1_PATH, "rb")
     await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="track 1")
@@ -152,7 +151,7 @@ async def gtruth2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     df.loc[df['chat_id'] == chat_id, 'correct'] = df.loc[df['chat_id'] == chat_id, 'correct'] + answer
     df.to_excel(USER_PATH, index=False)
     
-    reply_keyboard = [["تار", "نی", "کمانچه", "عود"], ["سه تار", "سنتور", "تنبک", "دف"]]
+    reply_keyboard = [["تار", "نی", "کمانچه", "عود"], ["سه تار", "سنتور", "تنبک", "دف"], ["نمی‌دانم"]]
 
     audio_file = open(TRUTH2_PATH, "rb")
     await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="track 2")
@@ -177,7 +176,7 @@ async def gtruth3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     df.loc[df['chat_id'] == chat_id, 'correct'] = df.loc[df['chat_id'] == chat_id, 'correct'] + answer
     df.to_excel(USER_PATH, index=False)
 
-    reply_keyboard = [["تار", "نی", "کمانچه", "عود"], ["سه تار", "سنتور", "تنبک", "دف"]]
+    reply_keyboard = [["تار", "نی", "کمانچه", "عود"], ["سه تار", "سنتور", "تنبک", "دف"], ["نمی‌دانم"]]
 
     audio_file = open(TRUTH3_PATH, "rb")
     await context.bot.send_voice(chat_id=chat_id, voice=audio_file, caption="track 3")
@@ -225,22 +224,32 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(
             "هر بار، یک قطعه پنج ثانیه‌ای ارسال می‌شود و احتمال حضور سازهای مختلف در این قطعه، پرسیده می‌شود\\. \n\n"
             "اگر صدای سازی را در قطعه نشنیدید، 0 را انتخاب کنید\\. \n"
-            "در صورتیکه صدای ساز را شنیدید، بین 1، 2 و 3 بسته به احتمال حضور صدای ساز، انتخاب کنید\\. \n\n"
+            "در صورتیکه صدای ساز را شنیدید، بین 1، 2 و 3 بسته به اطمینان حضور صدای ساز، انتخاب کنید\\. \n\n"
             "در هنگامی که صدای خواننده در قطعه وجود داشته باشد، در مورد وجود یا عدم وجود چه‌چه نیز پرسیده می‌شود\\. \n\n"
             ">چه‌چه یا چَهچَهه \\(تحریر\\) نوعی زینت آوازی است که به وسیله آن خواننده، صدایی آهنگین و *بدون کلام* را تولید می‌ کند\\.\n"
             ">بنابر این تعریف، هر صوتی از خواننده که بدون کلام باشد *چه‌چه* است\\. \n\n"
-            "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، *چه‌چه* را انتخاب کرده\\. در غیر این صورت، *کلام* را انتخاب کنید\\. \n\n"
-            "برای برچسب زدن قطعات /annotate را فشار دهید\\.",
+            "اگر قسمت صوتی خواننده، حاوی کلام نبود و صرفا زینت آوازی بود، *چه‌چه* را انتخاب کرده\\. در غیر این صورت، *کلام* را انتخاب کنید\\. \n\n",
             reply_markup=ReplyKeyboardRemove(),
             parse_mode='MarkdownV2',
             )
+        await update.message.reply_text(
+            "برای برچسب‌زدن قطعات /annotate را فشار دهید."
+            )
     else:
         await update.message.reply_text(
-            "هر بار، یک قطعه بیست ثانیه‌ای ارسال می‌شود و سوالاتی مانند آشنایی شما با قطعه، علاقه شما به آن، کیفیت صوتی‌اش و احساسات برانگیخته‌شده توسط قطعه، پرسیده می‌شود\\. \n\n"
-            "برای برچسب زدن قطعات /label را فشار دهید\\.",
+            "هر بار، یک قطعه بیست ثانیه‌ای ارسال می‌شود و سوالاتی مانند آشنایی شما با قطعه، علاقه شما به آن، کیفیت صوتی‌اش و احساسات برانگیخته‌شده توسط قطعه، پرسیده می‌شود. \n\n"
+            "احساسات برانگیخته شده در چهار دسته زیر جای می‌گیرد:\n\n"
+            "۱. آرامش، لطافت یا تعالی\n"
+            "۲. غم یا تلخی\n"
+            "۳. تنش، خشم یا ترس\n"
+            "۴. شادی، قدرت یا شگفتی\n",
             reply_markup=ReplyKeyboardRemove(),
-            parse_mode='MarkdownV2',
+            parse_mode='Markdown',
         )
+        await update.message.reply_text(
+            "برای برچسب‌زدن قطعات /label را فشار دهید."
+            )
+        
 
 
     return ConversationHandler.END
@@ -429,7 +438,9 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         df = pd.read_excel(USER_PATH)
         df.loc[df['chat_id'] == chat_id, 'num_annotation'] += 1
+        user_labels = df.loc[df['chat_id'] == chat_id, 'num_annotation'].tolist()[0]
         df.to_excel(USER_PATH, index=False)
+
 
     except:
         logger.info("Err in tagging")
@@ -437,7 +448,7 @@ async def end_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Finish replay
     await update.message.reply_text(
-        "✅ برچسب زنی این قطعه پایان یافت. بسیار متشکریم!\n\n"
+        f"✅ برچسب زنی این قطعه پایان یافت. شما تا کنون سازبندی __*{user_labels}*__ قطعه را مشخص کردید؛ بسیار متشکریم!\n\n"
         "اگر در برچسب‌زنی این قطعه اشتباه کردید و می‌خواهید نظرتان را حذف کنید،\n" 
         f"`#m{sample_id.replace('-','_').replace('.mp3','')}`"
         "\n"
@@ -684,12 +695,13 @@ async def end_label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     
 
     df = pd.read_excel(USER_PATH)
-    df.loc[df['chat_id'] == chat_id, 'num_annotation'] += 1
+    df.loc[df['chat_id'] == chat_id, 'num_label'] += 1
+    user_labels = df.loc[df['chat_id'] == chat_id, 'num_label'].tolist()[0]
     df.to_excel(USER_PATH, index=False)
 
     # Finish replay
     await update.message.reply_text(
-        "✅ برچسب زنی این قطعه پایان یافت. بسیار متشکریم!\n\n"
+        f"✅ برچسب زنی این قطعه پایان یافت. شما تا کنون __*{user_labels}*__ قطعه برچسب زدید؛ بسیار متشکریم!\n\n"
         "اگر در برچسب‌زنی این قطعه اشتباه کردید و می‌خواهید نظرتان را حذف کنید،\n" 
         f"`#e{sample_id.replace('-','_').replace('.mp3','')}`"
         "\n"
@@ -779,8 +791,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # Process hashtag messages
     if '#' in message_text[0]:
         sample_id = message_text[2:].replace('_', '-')+".mp3"
-        if message_text[1]=="m": dataframe_path, samples_path = ANNOTATION_PATH, ANNOTATION_SAMPLES_PATH 
-        else: dataframe_path, samples_path = EMOTION_PATH, EMOTION_SAMPLES_PATH
+        if message_text[1]=="m": dataframe_path, samples_path, task = ANNOTATION_PATH, ANNOTATION_SAMPLES_PATH, 'num_annotation'
+        else: dataframe_path, samples_path, task = EMOTION_PATH, EMOTION_SAMPLES_PATH, 'num_label'
         
         # Read the dataframe
         df = pd.read_excel(dataframe_path)
@@ -800,6 +812,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             samples.loc[samples['sample_id'] == sample_id, 'num_annotation'] -= 1
             samples.to_excel(samples_path, index=False)
             
+            user = pd.read_excel(USER_PATH)
+            user.loc[user['chat_id'] == chat_id, task] -= 1
+            user.to_excel(USER_PATH, index=False)
+
             await update.message.reply_text(
                 "برچسب این قطعه حذف شد.",
                 reply_markup=ReplyKeyboardRemove(),
@@ -836,18 +852,26 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     return True
 
+'''
+"با فشردن /label یک قطعه دیگر را برچسب‌زنی کنید.\n\n",
+            "جهت بازگشت به برچسب‌زنی سازبندی، /annotate را فشار دهید.",
+'''
+
+
+
 # Main function
 def main()-> None:
-
-    app = ApplicationBuilder().token("#TOKEN").build()
+    token = "6900009914:AAFbdwbNCq4V6Bvbuc8E4kSli_Hd9CxeW44"
+    #token = "7415325259:AAExXLDz3iBD6zRZExLfZp0l_QE_strnlLs"
+    app = ApplicationBuilder().token(token).build()
 
     conv_handler = ConversationHandler(
             entry_points = [CommandHandler("start", start)],
             states={
                 ABILITY: [MessageHandler(filters.Regex("^(کم: آشنایی کمی با سازهای موسیقی دارم|متوسط: با تفاوت صوتی برخی از سازهای موسیقی آشنا هستم|زیاد: گوش موسیقی من آموزش‌دیده است)$"), gtruth1)],
-                GTRUTH1: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک|عود|دف)$"), gtruth2)],
-                GTRUTH2: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک|عود|دف)$"), gtruth3)],
-                GTRUTH3: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک|عود|دف)$"), credit)],
+                GTRUTH1: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک|عود|دف|نمی‌دانم)$"), gtruth2)],
+                GTRUTH2: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک|عود|دف|نمی‌دانم)$"), gtruth3)],
+                GTRUTH3: [MessageHandler(filters.Regex("^(تار|نی|سه تار|کمانچه|سنتور|تنبک|عود|دف|نمی‌دانم)$"), credit)],
             },
             fallbacks=[CommandHandler("cancel", cancel)],
         )
@@ -886,7 +910,6 @@ def main()-> None:
 
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
-    app.idle()
 
 
 

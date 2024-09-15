@@ -295,8 +295,21 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         if level >= 2:
             await update.message.reply_text(
                 "متاسفانه هیچ قطعه ای در این سطح وجود ندارد. \n\n"
-                "لطفا، بعدا با فشردن /annotate دوباره امتحان کنید.",
+                "لطفا، بعدا با فشردن /annotate دوباره امتحان کنید."
+                "شما همچنان می‌توانید با فشردن /label یک قطعه در سطح 1 را برچسب زنی کنید.",
                 reply_markup=ReplyKeyboardRemove()
+            )
+
+            await update.message.reply_text(
+                "هر بار، یک قطعه بیست ثانیه‌ای ارسال می‌شود و سوالاتی مانند آشنایی شما با قطعه، علاقه شما به آن، کیفیت صوتی‌اش و احساسات برانگیخته‌شده توسط قطعه، پرسیده می‌شود. \n\n"
+                "احساسات برانگیخته شده در چهار دسته زیر جای می‌گیرد:\n\n"
+                "۱. آرامش، لطافت یا تعالی\n"
+                "۲. غم یا تلخی\n"
+                "۳. تنش، خشم یا ترس\n"
+                "۴. شادی، قدرت یا شگفتی\n\n"
+                "لطفا \label را فشار دهید.",
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode='Markdown',
             )
         
         else:
@@ -507,12 +520,24 @@ async def label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         if level >= 2:
             await update.message.reply_text(
                 "متاسفانه هیچ قطعه ای در این سطح وجود ندارد. \n\n"
-                "لطفا، بعدا با فشردن /annotate دوباره امتحان کنید.",
+                "لطفا، بعدا با فشردن /annotate دوباره امتحان کنید."
+                "شما همچنان می‌توانید با فشردن /label یک قطعه در سطح 1 را برچسب زنی کنید.",
                 reply_markup=ReplyKeyboardRemove()
             )
 
-            return ConversationHandler.END
-        
+            await update.message.reply_text(
+                "هر بار، یک قطعه بیست ثانیه‌ای ارسال می‌شود و سوالاتی مانند آشنایی شما با قطعه، علاقه شما به آن، کیفیت صوتی‌اش و احساسات برانگیخته‌شده توسط قطعه، پرسیده می‌شود. \n\n"
+                "احساسات برانگیخته شده در چهار دسته زیر جای می‌گیرد:\n\n"
+                "۱. آرامش، لطافت یا تعالی\n"
+                "۲. غم یا تلخی\n"
+                "۳. تنش، خشم یا ترس\n"
+                "۴. شادی، قدرت یا شگفتی\n\n"
+                "لطفا \label را فشار دهید.",
+                reply_markup=ReplyKeyboardRemove(),
+                parse_mode='Markdown',
+            )
+
+  
         else:
             await update.message.reply_text(
                 "متاسفانه هیچ قطعه ای در این سطح وجود ندارد. \n\n"
@@ -520,7 +545,7 @@ async def label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 reply_markup=ReplyKeyboardRemove()
             )
 
-            return ConversationHandler.END
+        return ConversationHandler.END
         
     # Choose a random sample from the filtered samples
     random_sample = filtered_samples.sample(n=1)

@@ -609,9 +609,9 @@ async def like(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Ask for 'quality' annotation
     reply_keyboard = [["1", "2", "3", "4", "5"]]
     await update.message.reply_text(
-            "به کیفیت این قطعه چه امتیازی می دهید؟ (5=بیشترین)",
+            "به کیفیت صوتی این قطعه چه امتیازی می دهید؟ (5=بیشترین)",
             reply_markup=ReplyKeyboardMarkup(
-                reply_keyboard, one_time_keyboard=True, input_field_placeholder="کیفیت؟"
+                reply_keyboard, one_time_keyboard=True, input_field_placeholder="کیفیت صوتی؟"
             ),
             parse_mode='Markdown',
         )
@@ -632,7 +632,7 @@ async def quality(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     
     # Ask for 'q_reason' annotation
     await update.message.reply_text(
-            f"در یک کلمه، عبارت یا جمله، دلیلتان را برای انتخاب {text} از 5 برای *کیفیت قطعه* بنویسید. (تایپ کنید) ",
+            f"در یک کلمه، عبارت یا جمله، دلیلتان را برای انتخاب {text} از 5 برای *کیفیت صونی* قطعه بنویسید. (تایپ کنید) ",
             reply_markup=ForceReply(
                 input_field_placeholder=f"مثال: {random_reply[0]}، {random_reply[1]}، {random_reply[2]} یا ..."[:64]
             ),
@@ -887,7 +887,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 # Main function
 def main()-> None:
     token = "#TOKEN"
-    #token = "7415325259:AAExXLDz3iBD6zRZExLfZp0l_QE_strnlLs"
     app = ApplicationBuilder().token(token).build()
 
     conv_handler = ConversationHandler(

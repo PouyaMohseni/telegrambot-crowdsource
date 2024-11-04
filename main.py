@@ -237,8 +237,8 @@ async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             )
     else:
         await update.message.reply_text(
-            "هر بار، یک قطعه بیست ثانیه‌ای ارسال می‌شود و سوالاتی مانند آشنایی شما با قطعه، علاقه شما به آن، کیفیت صوتی‌اش و احساسات برانگیخته‌شده توسط قطعه، پرسیده می‌شود. \n\n"
-            "احساسات برانگیخته شده در چهار دسته زیر جای می‌گیرد:\n\n"
+            "هر بار، یک قطعه بیست ثانیه‌ای ارسال می‌شود و سوالاتی از *کیفیت صوتی‌* قطعه و *احساسات برانگیخته‌شده* توسط آن پرسیده می‌شود. \n\n"
+                "احساسات برانگیخته شده در چهار دسته زیر جای می‌گیرند:\n\n"
             "۱. آرامش، لطافت یا تعالی\n"
             "۲. غم یا تلخی\n"
             "۳. تنش، خشم یا ترس\n"
@@ -301,8 +301,8 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             )
 
             await update.message.reply_text(
-                "هر بار، یک قطعه بیست ثانیه‌ای ارسال می‌شود و سوالاتی از کیفیت صوتی‌ قطعه و احساسات برانگیخته‌شده توسط آن پرسیده می‌شود. \n\n"
-                "احساسات برانگیخته شده در چهار دسته زیر جای می‌گیرد:\n\n"
+                "هر بار، یک قطعه بیست ثانیه‌ای ارسال می‌شود و سوالاتی از *کیفیت صوتی‌* قطعه و *احساسات برانگیخته‌شده* توسط آن پرسیده می‌شود. \n\n"
+                "احساسات برانگیخته شده در چهار دسته زیر جای می‌گیرند:\n\n"
                 "۱. آرامش، لطافت یا تعالی\n"
                 "۲. غم یا تلخی\n"
                 "۳. تنش، خشم یا ترس\n"
@@ -526,8 +526,8 @@ async def label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             )
 
             await update.message.reply_text(
-                "هر بار، یک قطعه بیست ثانیه‌ای ارسال می‌شود و سوالاتی از کیفیت صوتی‌ قطعه و احساسات برانگیخته‌شده توسط آن پرسیده می‌شود. \n\n"
-                "احساسات برانگیخته شده در چهار دسته زیر جای می‌گیرد:\n\n"
+                "هر بار، یک قطعه بیست ثانیه‌ای ارسال می‌شود و سوالاتی از *کیفیت صوتی‌* قطعه و *احساسات برانگیخته‌شده* توسط آن پرسیده می‌شود. \n\n"
+                "احساسات برانگیخته شده در چهار دسته زیر جای می‌گیرند:\n\n"
                 "۱. آرامش، لطافت یا تعالی\n"
                 "۲. غم یا تلخی\n"
                 "۳. تنش، خشم یا ترس\n"
@@ -564,11 +564,20 @@ async def label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["level"] = level
 
     # Ask for 'familiar' annotation
-    reply_keyboard = [["آشنا نیست"], ["تا حدودی آشناست"], ["بسیار آشناست"]]
+    #reply_keyboard = [["آشنا نیست"], ["تا حدودی آشناست"], ["بسیار آشناست"]]
+    #await update.message.reply_text(
+    #        "این قطعه برای شما چقدر آشناست؟",
+    #        reply_markup=ReplyKeyboardMarkup(
+    #            reply_keyboard, one_time_keyboard=True, input_field_placeholder="آشنایی؟"
+    #        ),
+    #        parse_mode='Markdown',
+    #    )
+    
+    reply_keyboard = [["1", "2", "3", "4", "5"]]
     await update.message.reply_text(
-            "این قطعه برای شما چقدر آشناست؟",
+            "به *کیفیت صوتی* این قطعه چه امتیازی می دهید؟ (5=بیشترین)",
             reply_markup=ReplyKeyboardMarkup(
-                reply_keyboard, one_time_keyboard=True, input_field_placeholder="آشنایی؟"
+                reply_keyboard, one_time_keyboard=True, input_field_placeholder="کیفیت صوتی؟"
             ),
             parse_mode='Markdown',
         )
@@ -886,7 +895,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 # Main function
 def main()-> None:
-    token = "6900009914:AAFbdwbNCq4V6Bvbuc8E4kSli_Hd9CxeW44"
+    token = "#TOKEN"
     app = ApplicationBuilder().token(token).build()
 
     conv_handler = ConversationHandler(

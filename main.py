@@ -301,7 +301,7 @@ async def annotate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             )
 
             await update.message.reply_text(
-                "هر بار، یک قطعه بیست ثانیه‌ای ارسال می‌شود و سوالاتی مانند آشنایی شما با قطعه، علاقه شما به آن، کیفیت صوتی‌اش و احساسات برانگیخته‌شده توسط قطعه، پرسیده می‌شود. \n\n"
+                "هر بار، یک قطعه بیست ثانیه‌ای ارسال می‌شود و سوالاتی از کیفیت صوتی‌ قطعه و احساسات برانگیخته‌شده توسط آن پرسیده می‌شود. \n\n"
                 "احساسات برانگیخته شده در چهار دسته زیر جای می‌گیرد:\n\n"
                 "۱. آرامش، لطافت یا تعالی\n"
                 "۲. غم یا تلخی\n"
@@ -526,7 +526,7 @@ async def label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             )
 
             await update.message.reply_text(
-                "هر بار، یک قطعه بیست ثانیه‌ای ارسال می‌شود و سوالاتی مانند آشنایی شما با قطعه، علاقه شما به آن، کیفیت صوتی‌اش و احساسات برانگیخته‌شده توسط قطعه، پرسیده می‌شود. \n\n"
+                "هر بار، یک قطعه بیست ثانیه‌ای ارسال می‌شود و سوالاتی از کیفیت صوتی‌ قطعه و احساسات برانگیخته‌شده توسط آن پرسیده می‌شود. \n\n"
                 "احساسات برانگیخته شده در چهار دسته زیر جای می‌گیرد:\n\n"
                 "۱. آرامش، لطافت یا تعالی\n"
                 "۲. غم یا تلخی\n"
@@ -574,7 +574,7 @@ async def label(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         )
     
     
-    return LIKE
+    return QUALITY
 
 
 async def familiar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -886,7 +886,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 # Main function
 def main()-> None:
-    token = "#TOKEN"
+    token = "6900009914:AAFbdwbNCq4V6Bvbuc8E4kSli_Hd9CxeW44"
     app = ApplicationBuilder().token(token).build()
 
     conv_handler = ConversationHandler(

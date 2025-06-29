@@ -1,6 +1,6 @@
 # 🎧 Telegram Annotation Bot for HamNava Dataset
 
-This repository contains the implementation of a Telegram bot used for **crowd-sourced multi-label instrument classification** in **Iranian classical music**, as part of the creation of the [HamNava dataset](#📊-hamnava-dataset-summary).
+This repository contains the implementation of a Telegram bot used for **crowd-sourced multi-label instrument classification** in **Iranian classical music**, as part of the creation of the [HamNava dataset](#hamnava-dataset-summary).
 
 The bot automates the process of distributing audio excerpts to volunteers, collecting their confidence-based judgments for each instrument, and managing user profiles based on self-declared and tested proficiency levels.
 
@@ -8,17 +8,16 @@ The bot automates the process of distributing audio excerpts to volunteers, coll
 
 ## 📁 Repository Structure
 
-├── bot.py                         # Main Telegram bot logic
-├── requirements.txt              # Python dependencies
-├── .env                          # Bot credentials
+```
+├── main.py                       # Main Telegram bot logic
 ├── dataset/
-│   └── samples/                  # Main audio excerpts to be annotated
-├── truth/                        # Audio clips for ear-training test
-├── samples.xlsx                  # Metadata for all audio samples (track names, paths, difficulty)
-├── user.xlsx                     # Stores user info and hearing test performance
-├── dataframe/
-│   └── annotation.xlsx           # Full annotation logs with confidence scores and timestamps
-
+   ├── samples/                  # Main audio excerpts to be annotated
+    └── truth/                    # Audio clips for ear-training test
+└── dataframe/
+    ├── annotation.xlsx           # Full annotation logs with confidence scores and timestamps
+    ├── samples.xlsx              # Metadata for all audio samples (track names, paths, difficulty)
+    └── user.xlsx                 # Stores user info and hearing test performance
+```
 ---
 
 ## 🔍 File Descriptions
@@ -37,21 +36,21 @@ The bot automates the process of distributing audio excerpts to volunteers, coll
 
  - Labels 9 musical elements:
 
- - tar, setar, santur, oud, kamancheh, ney, tonbak, daf, vocal
+   - tar, setar, santur, oud, kamancheh, ney, tonbak, daf, vocal
 
  - Confidence levels:
 
- - 0 → Not heard
+   - 0 → Not heard
 
- - 1, 2, 3 → Increasing certainty (mapped to 0.5, 0.75, and 1.0)
+   - 1, 2, 3 → Increasing certainty (mapped to 0.5, 0.75, and 1.0)
 
  - Annotators are split into two groups:
 
- - Easy: Clearer clips with instrument contrast
+   - Easy: Clearer clips with instrument contrast
 
- - Hard: Densely layered or similar technique instruments
+   - Hard: Densely layered or similar technique instruments
 
- - Users are assigned based on their performance on a music hearing test using clips in truth/.
+   - Users are assigned based on their performance on a music hearing test using clips in truth/.
 
 
 # 📊 HamNava Dataset Summary
